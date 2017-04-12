@@ -1,0 +1,13 @@
+# Intellij project files
+*.iml
+*.iws
+*.ipr
+*.ids
+.idea
+.pmd.log
+
+# Maven versions plugin backup
+*.versionsBackup
+
+# All target directories
+*/target/**
