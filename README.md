@@ -1,6 +1,6 @@
 # FSBrowser
 
-FSBrowser is simple desktop interface for Hadoop Distributed File System. 
+FSBrowser is a simple desktop interface for Hadoop Distributed File System. 
 The application can be used as a more efficient alternative to Hue's file browser. 
 It uses native hadoop libraries instead of HttpFS and should be faster for reading and writing directories with large number of files.
 
@@ -8,6 +8,7 @@ It uses native hadoop libraries instead of HttpFS and should be faster for readi
 
 ### Features
 - Sending files / directories between local file system and HDFS
+- Reading directories with millions of files
 - Multiple active connections (tabs)
 - GUI interface for hadoop commandline tools
 
