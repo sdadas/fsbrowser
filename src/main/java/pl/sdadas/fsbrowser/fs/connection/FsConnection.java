@@ -10,6 +10,7 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.security.AccessControlException;
 import org.apache.hadoop.security.UserGroupInformation;
+import org.springframework.data.hadoop.fs.DistCp;
 import org.springframework.data.hadoop.fs.FsShell;
 import pl.sdadas.fsbrowser.exception.FsAccessException;
 import pl.sdadas.fsbrowser.exception.FsException;
@@ -19,6 +20,7 @@ import pl.sdadas.fsbrowser.fs.action.FsckAction;
 import java.io.*;
 import java.security.PrivilegedExceptionAction;
 import java.util.Arrays;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 
@@ -144,6 +146,16 @@ public class FsConnection implements Closeable {
         doCopy(src, dest, true);
     }
 
+    public void distCp(String [] from, String to) throws FsException {
+        execute((shell, fs) ->  {
+            DistCp tool = new DistCp(this.getConfig(), null);
+            EnumSet<DistCp.Preserve> preserve = EnumSet.noneOf(DistCp.Preserve.class);
+            String[] uris = ArrayUtils.add(from, to);
+            tool.copy(preserve, false, false, false, false, uris);
+            return null;
+        });
+    }
+
     private void doCopy(Path[] src, Path dest, boolean deleteSrc) throws FsException {
         List<String> paths = Lists.newArrayList(pathsToStrings(src));
         execute((shell, fs) -> {
@@ -183,5 +195,9 @@ public class FsConnection implements Closeable {
 
     private String[] pathsToStrings(Path... paths) {
         return Arrays.stream(paths).map(path -> path.toUri().getPath()).toArray(String[]::new);
+    }
+
+    public String getUser() {
+        return config.getUser();
     }
 }

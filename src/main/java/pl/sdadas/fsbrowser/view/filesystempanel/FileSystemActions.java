@@ -5,12 +5,15 @@ import com.alee.laf.filechooser.WebFileChooser;
 import com.alee.laf.optionpane.WebOptionPane;
 import com.alee.utils.SwingUtils;
 import com.google.common.collect.Lists;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.Path;
 import pl.sdadas.fsbrowser.app.clipboard.ClipboardAction;
 import pl.sdadas.fsbrowser.app.clipboard.ClipboardHelper;
+import pl.sdadas.fsbrowser.exception.FsException;
+import pl.sdadas.fsbrowser.fs.connection.ConnectionConfig;
 import pl.sdadas.fsbrowser.fs.connection.FsConnection;
 import pl.sdadas.fsbrowser.utils.FileSystemUtils;
 import pl.sdadas.fsbrowser.utils.ViewUtils;
@@ -21,6 +24,7 @@ import pl.sdadas.fsbrowser.view.props.PropertiesDialog;
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -214,8 +218,8 @@ public class FileSystemActions {
 
             ClipboardHelper.Paths paths = clipboard.getPaths();
             List<Path> src = paths.getPaths();
+            Path dest = parent.getModel().getCurrentPath();
             if(FileSystemUtils.isSameFileSystem(paths.getConnection(), parent.getConnection())) {
-                Path dest = parent.getModel().getCurrentPath();
                 FsConnection conn = parent.getConnection();
                 if(ClipboardAction.COPY.equals(paths.getAction())) {
                     conn.copy(src.toArray(new Path[src.size()]), dest);
@@ -227,11 +231,24 @@ public class FileSystemActions {
                 }
                 parent.getModel().reloadView();
             } else {
-                /* TODO: Do DistCp */
-                ViewUtils.warning(parent, "Not implemented!");
+                /* TODO: Ara you sure? */
+                doDistCp(paths.getConnection(), parent.getConnection(), src, dest);
+                //ViewUtils.warning(parent, "Not implemented!");
             }
             clipboard.clear();
         });
+    }
+
+    private void doDistCp(FsConnection from, FsConnection to, List<Path> src, Path dest) throws FsException {
+        ConnectionConfig config = new ConnectionConfig(to.getUser(), from.getConfig(), to.getConfig());
+        FsConnection conn = new FsConnection(config);
+        try {
+            String[] srcUris = src.stream().map(p -> p.toUri().toString()).toArray(String[]::new);
+            String destUri = dest.toUri().toString();
+            conn.distCp(srcUris, destUri);
+        } finally {
+            IOUtils.closeQuietly(conn);
+        }
     }
 
     public FileAction gotoAction() {
