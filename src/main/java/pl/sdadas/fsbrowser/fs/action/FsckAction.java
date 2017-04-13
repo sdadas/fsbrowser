@@ -7,7 +7,6 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hdfs.tools.DFSck;
 import org.springframework.data.hadoop.fs.FsShell;
-import pl.sdadas.fsbrowser.fs.FsUtils;
 import pl.sdadas.fsbrowser.utils.FileSystemUtils;
 
 import java.io.ByteArrayOutputStream;

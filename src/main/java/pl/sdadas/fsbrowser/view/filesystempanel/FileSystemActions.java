@@ -11,7 +11,6 @@ import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.Path;
 import pl.sdadas.fsbrowser.app.clipboard.ClipboardAction;
 import pl.sdadas.fsbrowser.app.clipboard.ClipboardHelper;
-import pl.sdadas.fsbrowser.fs.FsUtils;
 import pl.sdadas.fsbrowser.fs.connection.FsConnection;
 import pl.sdadas.fsbrowser.utils.FileSystemUtils;
 import pl.sdadas.fsbrowser.utils.ViewUtils;

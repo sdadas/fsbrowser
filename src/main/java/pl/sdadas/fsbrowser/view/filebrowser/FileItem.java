@@ -3,7 +3,6 @@ package pl.sdadas.fsbrowser.view.filebrowser;
 import org.apache.commons.lang3.time.DateFormatUtils;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.Path;
-import pl.sdadas.fsbrowser.fs.FsUtils;
 import pl.sdadas.fsbrowser.utils.FileSystemUtils;
 import pl.sdadas.fsbrowser.utils.IconFactory;
 
