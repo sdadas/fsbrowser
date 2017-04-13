@@ -231,9 +231,13 @@ public class FileSystemActions {
                 }
                 parent.getModel().reloadView();
             } else {
+                if(!ViewUtils.requireNativeLibraries(parent)) return;
                 /* TODO: Ara you sure? */
                 doDistCp(paths.getConnection(), parent.getConnection(), src, dest);
-                //ViewUtils.warning(parent, "Not implemented!");
+                if(!paths.getSource().isClosed()) {
+                    paths.getSource().getModel().reloadView();
+                }
+                parent.getModel().reloadView();
             }
             clipboard.clear();
         });

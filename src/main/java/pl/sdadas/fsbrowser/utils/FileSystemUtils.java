@@ -17,6 +17,7 @@ package pl.sdadas.fsbrowser.utils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.util.Shell;
 import pl.sdadas.fsbrowser.fs.connection.FsConnection;
 
 /**
@@ -45,6 +46,13 @@ public class FileSystemUtils {
         int exp = (int) (Math.log(bytes) / Math.log(unit));
         String pre = (si ? "kMGTPE" : "KMGTPE").charAt(exp - 1) + (si ? "i" : "");
         return String.format("%.1f %sB", bytes / Math.pow(unit, exp), pre);
+    }
+
+    public static boolean checkNativeLibraries() {
+        if(Shell.WINDOWS && StringUtils.isBlank(Shell.WINUTILS)) {
+            return false;
+        }
+        return true;
     }
 
     private static int getMetricUnit(boolean si) {
