@@ -50,6 +50,7 @@
                                     <mainClass>pl.sdadas.fsbrowser.Application</mainClass>
                                 </transformer>
                             </transformers>
+                            <finalName>fsbrowser</finalName>
                         </configuration>
                     </execution>
                 </executions>
