@@ -235,4 +235,8 @@ public class FileSystemPanel extends LoadingOverlay implements Closeable {
     public boolean isClosed() {
         return closed;
     }
+
+    public FileSystemActions getActions() {
+        return actions;
+    }
 }

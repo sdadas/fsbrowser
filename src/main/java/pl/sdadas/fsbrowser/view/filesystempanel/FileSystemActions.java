@@ -178,7 +178,7 @@ public class FileSystemActions {
                 .get();
     }
 
-    private void doCopy(List<FileItem> selection) {
+    public void doCopy(List<FileItem> selection) {
         ViewUtils.handleErrors(parent, () -> {
             Path[] paths = getItemPaths(selection);
             if(paths.length == 0) return;
@@ -195,7 +195,7 @@ public class FileSystemActions {
                 .get();
     }
 
-    private void doCut(List<FileItem> selection) {
+    public void doCut(List<FileItem> selection) {
         ViewUtils.handleErrors(parent, () -> {
             Path[] paths = getItemPaths(selection);
             if(paths.length == 0) return;
@@ -211,36 +211,39 @@ public class FileSystemActions {
                 .get();
     }
 
-    private void doPaste(List<FileItem> selection) {
+    public void doPaste(List<FileItem> selection) {
         ViewUtils.handleErrors(parent, () -> {
             ClipboardHelper clipboard = parent.getClipboard();
             if(clipboard.isEmpty()) return;
-
             ClipboardHelper.Paths paths = clipboard.getPaths();
-            List<Path> src = paths.getPaths();
-            Path dest = parent.getModel().getCurrentPath();
-            if(FileSystemUtils.isSameFileSystem(paths.getConnection(), parent.getConnection())) {
-                FsConnection conn = parent.getConnection();
-                if(ClipboardAction.COPY.equals(paths.getAction())) {
-                    conn.copy(src.toArray(new Path[src.size()]), dest);
-                } else {
-                    conn.move(src.toArray(new Path[src.size()]), dest);
-                    if(!paths.getSource().isClosed()) {
-                        paths.getSource().getModel().reloadView();
-                    }
-                }
-                parent.getModel().reloadView();
+            doPaste(paths);
+            clipboard.clear();
+        });
+    }
+
+    public void doPaste(ClipboardHelper.Paths paths) throws FsException {
+        List<Path> src = paths.getPaths();
+        Path dest = parent.getModel().getCurrentPath();
+        if(FileSystemUtils.isSameFileSystem(paths.getConnection(), parent.getConnection())) {
+            FsConnection conn = parent.getConnection();
+            if(ClipboardAction.COPY.equals(paths.getAction())) {
+                conn.copy(src.toArray(new Path[src.size()]), dest);
             } else {
-                if(!ViewUtils.requireNativeLibraries(parent)) return;
-                /* TODO: Ara you sure? */
-                doDistCp(paths.getConnection(), parent.getConnection(), src, dest);
+                conn.move(src.toArray(new Path[src.size()]), dest);
                 if(!paths.getSource().isClosed()) {
                     paths.getSource().getModel().reloadView();
                 }
-                parent.getModel().reloadView();
             }
-            clipboard.clear();
-        });
+            parent.getModel().reloadView();
+        } else {
+            if(!ViewUtils.requireNativeLibraries(parent)) return;
+                /* TODO: Ara you sure? */
+            doDistCp(paths.getConnection(), parent.getConnection(), src, dest);
+            if(!paths.getSource().isClosed()) {
+                paths.getSource().getModel().reloadView();
+            }
+            parent.getModel().reloadView();
+        }
     }
 
     private void doDistCp(FsConnection from, FsConnection to, List<Path> src, Path dest) throws FsException {

@@ -59,7 +59,7 @@ public final class ViewUtils {
     public static boolean requireNativeLibraries(JComponent comp) {
         if(!FileSystemUtils.checkNativeLibraries()) {
             String message = "This action requires hadoop native libraries.\n" +
-                    "Please install them, setup HADOOP_HOME environment variable and restart application.\n";
+                    "Please install them, set HADOOP_HOME environment variable and restart application.\n";
             warning(comp, message);
             return false;
         }
