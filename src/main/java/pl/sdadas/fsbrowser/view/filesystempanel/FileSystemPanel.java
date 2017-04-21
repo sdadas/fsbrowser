@@ -187,9 +187,12 @@ public class FileSystemPanel extends LoadingOverlay implements Closeable {
         result.add(createToolButton(this.actions.touchAction()));
         result.add(createToolButton(this.actions.moveToTrashAction()));
         result.add(createToolButton(this.actions.removeAction()));
-        result.add(createToolButton(this.actions.previewFileAction()));
         result.addSeparator();
+        result.add(createToolButton(this.actions.previewFileAction()));
         result.add(createToolButton(this.actions.fsckAction()));
+        result.addSeparator();
+        result.add(createToolButton(this.actions.emptyTrashAction()));
+        result.add(createToolButton(this.actions.cleanupAction()));
         return result;
     }
 

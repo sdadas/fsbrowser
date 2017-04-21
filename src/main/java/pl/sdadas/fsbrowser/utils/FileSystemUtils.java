@@ -17,6 +17,7 @@ package pl.sdadas.fsbrowser.utils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.util.Shell;
 import pl.sdadas.fsbrowser.fs.connection.FsConnection;
 
@@ -53,6 +54,12 @@ public class FileSystemUtils {
             return false;
         }
         return true;
+    }
+
+    public static boolean isParentPath(Path parent, Path child) {
+        String parentPath = parent.toUri().getPath();
+        String childPath = child.toUri().getPath();
+        return childPath.startsWith(parentPath);
     }
 
     private static int getMetricUnit(boolean si) {

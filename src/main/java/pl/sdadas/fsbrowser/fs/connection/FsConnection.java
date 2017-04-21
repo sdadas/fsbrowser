@@ -183,6 +183,17 @@ public class FsConnection implements Closeable {
         return execute((shell, fs) -> fs.open(path));
     }
 
+    public boolean exists(Path path) throws FsException {
+        return execute((shell, fs) -> fs.exists(path));
+    }
+
+    public void emptyTrash() throws FsException {
+        execute((shell, fs) -> {
+            shell.expunge();
+            return null;
+        });
+    }
+
     @Override
     public void close() throws IOException {
         IOUtils.closeQuietly(fs);

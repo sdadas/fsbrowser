@@ -75,6 +75,7 @@ public class FileContentDialog extends WebDialog {
         this.statusBar.add(this.statusLabel);
 
         WebScrollPane scroll = new WebScrollPane(this.text);
+        scroll.setDrawFocus(false);
         scroll.getVerticalScrollBar().addAdjustmentListener(this::onScrollBottom);
         scroll.getVerticalScrollBar().setUnitIncrement(100);
 

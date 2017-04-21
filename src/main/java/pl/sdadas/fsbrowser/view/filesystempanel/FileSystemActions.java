@@ -17,6 +17,7 @@ import pl.sdadas.fsbrowser.fs.connection.ConnectionConfig;
 import pl.sdadas.fsbrowser.fs.connection.FsConnection;
 import pl.sdadas.fsbrowser.utils.FileSystemUtils;
 import pl.sdadas.fsbrowser.utils.ViewUtils;
+import pl.sdadas.fsbrowser.view.cleanup.CleanupDialog;
 import pl.sdadas.fsbrowser.view.filebrowser.FileItem;
 import pl.sdadas.fsbrowser.view.filecontent.FileContentDialog;
 import pl.sdadas.fsbrowser.view.props.PropertiesDialog;
@@ -293,6 +294,44 @@ public class FileSystemActions {
             FileContentDialog dialog = new FileContentDialog(stream, item.getStatus().getLen(), owner);
             dialog.setTitle(item.getName());
             dialog.showDialog();
+        });
+    }
+
+    public FileAction cleanupAction() {
+        return FileAction.builder(this::doCleanup)
+                .name("Cleanup temporary directories")
+                .icon("cleanup")
+                .get();
+    }
+
+    private void doCleanup(List<FileItem> selection) {
+        ViewUtils.handleErrors(parent, () -> {
+            Window owner = SwingUtils.getWindowAncestor(parent);
+            CleanupDialog dialog = new CleanupDialog(parent.getConnection(), owner);
+            dialog.showDialog();
+        });
+    }
+
+    public FileAction emptyTrashAction() {
+        return FileAction.builder(this::doEmptyTrash)
+                .name("Empty trash")
+                .icon("empty-trash")
+                .get();
+    }
+
+    private void doEmptyTrash(List<FileItem> selection) {
+        ViewUtils.handleErrors(parent, () -> {
+            Window window = SwingUtils.getWindowAncestor(parent);
+            String dir = String.format("/user/%s/.Trash", parent.getConnection().getUser());
+            String message = String.format("<html>Do you want to clean <b>%s</b> directory?</html>", dir);
+            int result = WebOptionPane.showConfirmDialog(window, message, "Confirm",
+                    WebOptionPane.YES_NO_OPTION, WebOptionPane.QUESTION_MESSAGE);
+            if(result == WebOptionPane.YES_OPTION) {
+                parent.getConnection().emptyTrash();
+                if(FileSystemUtils.isParentPath(parent.getModel().getCurrentPath(), new Path(dir))) {
+                    parent.getModel().reloadView();
+                }
+            }
         });
     }
 
