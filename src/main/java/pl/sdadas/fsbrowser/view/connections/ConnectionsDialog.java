@@ -1,20 +1,24 @@
 package pl.sdadas.fsbrowser.view.connections;
 
-import com.alee.extended.panel.WebButtonGroup;
-import com.alee.extended.statusbar.WebStatusBar;
+import com.alee.extended.layout.VerticalFlowLayout;
 import com.alee.laf.button.WebButton;
 import com.alee.laf.list.WebList;
 import com.alee.laf.list.WebListModel;
+import com.alee.laf.panel.WebPanel;
 import com.alee.laf.rootpane.WebDialog;
+import com.alee.laf.scroll.WebScrollPane;
 import pl.sdadas.fsbrowser.app.config.AppConfigProvider;
 import pl.sdadas.fsbrowser.app.config.AppConnection;
 import pl.sdadas.fsbrowser.utils.IconFactory;
 import pl.sdadas.fsbrowser.utils.ViewUtils;
 
 import java.awt.*;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -42,16 +46,22 @@ public class ConnectionsDialog extends WebDialog {
         this.model = createListModel();
         this.list = createList();
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
-        setMinimumSize(new Dimension(350, 300));
+        setMinimumSize(new Dimension(400, 200));
         setTitle("Connections");
-        setLayout(new BorderLayout());
         setResizable(false);
         setModal(true);
 
-        WebStatusBar statusBar = new WebStatusBar();
-        statusBar.add(createButtons());
-        add(this.list, BorderLayout.CENTER);
-        add(statusBar, BorderLayout.PAGE_END);
+        WebPanel buttonsPanel = createButtonsPanel();
+        buttonsPanel.setMargin(10, 0, 0, 0);
+        WebScrollPane scroll = new WebScrollPane(this.list);
+        scroll.setDrawFocus(false);
+
+        WebPanel panel = new WebPanel(new VerticalFlowLayout());
+        panel.setMargin(10);
+        panel.add(scroll);
+        panel.add(buttonsPanel);
+
+        add(panel);
         ViewUtils.setupDialogWindow(this);
     }
 
@@ -65,15 +75,25 @@ public class ConnectionsDialog extends WebDialog {
                 connect(idx);
             }
         });
+        this.list.addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyPressed(KeyEvent event) {
+                if (event.getKeyCode() == KeyEvent.VK_ENTER) {
+                    int idx = list.getSelectedIndex();
+                    if(idx < 0) return;
+                    connect(idx);
+                }
+            }
+        });
     }
 
-    private WebButtonGroup createButtons() {
-        WebButtonGroup buttons = new WebButtonGroup();
-        buttons.add(createButton("Connect", "connection", this::connect));
-        buttons.add(createButton("Add", "add-connection", this::addConnection));
-        buttons.add(createButton("Remove", "remove-connection", this::removeConnection));
+    private WebPanel createButtonsPanel() {
+        List<WebButton> buttons = new LinkedList<>();
         buttons.add(createButton("Edit", "edit-connection", this::editConnection));
-        return buttons;
+        buttons.add(createButton("Remove", "remove-connection", this::removeConnection));
+        buttons.add(createButton("Add", "add-connection", this::addConnection));
+        buttons.add(createButton("Connect", "connection", this::connect));
+        return ViewUtils.rightLeftPanel(85, buttons.toArray(new WebButton[buttons.size()]));
     }
 
     private void connect() {
