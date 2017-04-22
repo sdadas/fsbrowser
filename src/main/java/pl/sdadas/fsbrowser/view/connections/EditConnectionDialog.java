@@ -86,6 +86,7 @@ public class EditConnectionDialog extends WebDialog {
         WebPanel filePanel = ViewUtils.leftRightPanel(fileLabel, this.file);
         this.propertiesTable = new WebTable(this.propertiesModel);
         WebScrollPane scroll = new WebScrollPane(propertiesTable);
+        scroll.getVerticalScrollBar().setUnitIncrement(50);
         scroll.setDrawFocus(false);
         scroll.setPreferredHeight(300);
         WebPanel buttonsPanel = ViewUtils.rightLeftPanel(50,
