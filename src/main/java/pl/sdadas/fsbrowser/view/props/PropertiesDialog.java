@@ -3,8 +3,8 @@ package pl.sdadas.fsbrowser.view.props;
 import com.alee.laf.rootpane.WebDialog;
 import com.alee.laf.scroll.WebScrollPane;
 import com.alee.laf.table.WebTable;
+import pl.sdadas.fsbrowser.common.PropertyTableModel;
 
-import javax.swing.*;
 import java.awt.*;
 import java.util.Map;
 

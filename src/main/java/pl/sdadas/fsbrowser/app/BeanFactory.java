@@ -35,11 +35,7 @@ public final class BeanFactory {
     }
 
     public static FsConnection connection(AppConnection connection) {
-        List<String> strings = connection.getResources();
-        List<Resource> resources = strings.stream()
-                .map(r -> new ByteArrayResource(r.getBytes(StandardCharsets.UTF_8)))
-                .collect(Collectors.toList());
-        ConnectionConfig config = new ConnectionConfig(connection.getUser(), resources);
+        ConnectionConfig config = new ConnectionConfig(connection.getUser(), connection.getPropertiesMap());
         return new FsConnection(config);
     }
 

@@ -84,7 +84,7 @@ public class CleanupDialog extends WebDialog {
     }
 
     private WebPanel createButtonsPanel() {
-        return ViewUtils.rightLeftPanel(50, new WebButton("Ok", this::accept), new WebButton("Cancel", this::reject));
+        return ViewUtils.rightLeftPanel(50, new WebButton("Cancel", this::reject), new WebButton("Ok", this::accept));
     }
 
     @SuppressWarnings("unchecked")

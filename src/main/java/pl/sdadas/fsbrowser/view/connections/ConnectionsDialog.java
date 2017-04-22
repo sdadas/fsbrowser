@@ -136,7 +136,7 @@ public class ConnectionsDialog extends WebDialog {
 
     private void editConnection(AppConnection connection) {
         boolean adding = connection == null;
-        AppConnection object = adding ? new AppConnection() : connection;
+        AppConnection object = adding ? new AppConnection("hdfs", "hdfs@cluster") : connection;
         EditConnectionDialog dialog = new EditConnectionDialog(object, this);
         boolean result = dialog.showDialog();
         if(result) {

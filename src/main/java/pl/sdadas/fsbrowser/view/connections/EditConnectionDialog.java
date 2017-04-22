@@ -2,22 +2,34 @@ package pl.sdadas.fsbrowser.view.connections;
 
 import com.alee.extended.filechooser.WebFileChooserField;
 import com.alee.extended.layout.FormLayout;
-import com.alee.extended.panel.WebButtonGroup;
+import com.alee.extended.layout.VerticalFlowLayout;
 import com.alee.laf.button.WebButton;
 import com.alee.laf.label.WebLabel;
 import com.alee.laf.panel.WebPanel;
 import com.alee.laf.rootpane.WebDialog;
+import com.alee.laf.scroll.WebScrollPane;
+import com.alee.laf.table.WebTable;
 import com.alee.laf.text.WebTextField;
-import org.apache.commons.io.IOUtils;
+import com.alee.managers.language.data.TooltipWay;
+import com.alee.managers.tooltip.TooltipManager;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.core.io.Resource;
 import pl.sdadas.fsbrowser.app.config.AppConnection;
+import pl.sdadas.fsbrowser.app.config.ConfigProperty;
+import pl.sdadas.fsbrowser.app.config.SourceConfig;
+import pl.sdadas.fsbrowser.common.PropertyTableModel;
+import pl.sdadas.fsbrowser.utils.IconFactory;
+import pl.sdadas.fsbrowser.utils.JaxbUtils;
 import pl.sdadas.fsbrowser.utils.ViewUtils;
 
 import java.awt.*;
+import java.awt.event.ActionEvent;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Enumeration;
@@ -31,6 +43,10 @@ import java.util.zip.ZipFile;
  */
 public class EditConnectionDialog extends WebDialog {
 
+    private final PropertyTableModel propertiesModel;
+
+    private WebTable propertiesTable;
+
     private WebTextField name;
 
     private WebTextField user;
@@ -41,23 +57,22 @@ public class EditConnectionDialog extends WebDialog {
 
     private final AppConnection value;
 
-    private List<String> errors;
-
     private boolean success;
 
     public EditConnectionDialog(AppConnection value, Dialog owner) {
         super(owner);
         this.value = value;
+        this.propertiesModel = new PropertyTableModel(value.getPropertiesMap());
         initView();
+        initListeners();
         initValues();
     }
 
     private void initView() {
         setDefaultCloseOperation(WebDialog.DISPOSE_ON_CLOSE);
-        setMinimumSize(new Dimension(350, 150));
-        setResizable(false);
-        setModal(true);
+        setMinimumSize(new Dimension(350, 350));
         setTitle("Connection");
+        setModal(true);
 
         this.name = new WebTextField();
         this.user = new WebTextField();
@@ -65,29 +80,54 @@ public class EditConnectionDialog extends WebDialog {
         this.file.setFilesDropEnabled(true);
         this.file.setMultiSelectionEnabled(false);
         this.file.setShowFileExtensions(true);
+        this.file.setMinimumWidth(200);
+        WebLabel fileLabel = new WebLabel("Load configuration file", IconFactory.getIcon("question"));
+        TooltipManager.setTooltip(fileLabel, getFileTooltipText(), TooltipWay.down, 0);
+        WebPanel filePanel = ViewUtils.leftRightPanel(fileLabel, this.file);
+        this.propertiesTable = new WebTable(this.propertiesModel);
+        WebScrollPane scroll = new WebScrollPane(propertiesTable);
+        scroll.setDrawFocus(false);
+        scroll.setPreferredHeight(300);
+        WebPanel buttonsPanel = ViewUtils.rightLeftPanel(50,
+                new WebButton("Cancel", this::cancel),
+                new WebButton("Save", this::save));
+        buttonsPanel.setMargin(10, 0, 0, 0);
 
         FormLayout layout = new FormLayout(5, 5);
-        this.panel = new WebPanel(layout);
+        WebPanel formPanel = new WebPanel(layout);
+        formPanel.setMargin(0, 0, 20, 0);
+        formPanel.add(new WebLabel("Connection name"));
+        formPanel.add(this.name);
+        formPanel.add(new WebLabel("Connect as user"));
+        formPanel.add(this.user);
+
+        this.panel = new WebPanel(new VerticalFlowLayout());
         this.panel.setMargin(10);
-        this.panel.setOpaque(false);
-        this.panel.add(new WebLabel("Connection name"));
-        this.panel.add(this.name);
-        this.panel.add(new WebLabel("Connect as user"));
-        this.panel.add(this.user);
-        this.panel.add(new WebLabel("HDFS configuration"));
-        this.panel.add(this.file);
-
-        WebButtonGroup buttons = new WebButtonGroup();
-        WebButton save = new WebButton("Save", (event) -> save());
-        WebButton cancel = new WebButton("Cancel", (event) -> cancel());
-        buttons.add(save);
-        buttons.add(cancel);
-        this.panel.add(new WebLabel());
-        this.panel.add(buttons);
-
+        this.panel.add(formPanel, filePanel, scroll, buttonsPanel);
         add(this.panel);
-        pack();
-        setLocationRelativeTo(getOwner());
+        ViewUtils.setupDialogWindow(this);
+    }
+
+    private String getFileTooltipText() {
+        return "<html><b>core-site.xml</b> and <b>hdfs-site.xml</b> hadoop configuration<br/>" +
+                "files need to be provided. They can either be loaded separately<br/>" +
+                "or as a zip archive. If you use <b>Cloudera Hadoop</b>, you can<br/>" +
+                "download configuration from Cloudera Manager:<br/>" +
+                "<b>HDFS Service</b> -> <b>Actions</b> -> <b>Download client configuration<b/><br/></html>";
+    }
+
+    private void initListeners() {
+        this.file.addSelectedFilesListener(files -> {
+            if(files.size() == 0) return;
+            List<String> errors = new ArrayList<>();
+            List<ConfigProperty> properties = readConfigurationFile(files.get(0), errors);
+            if(!errors.isEmpty()) {
+                ViewUtils.error(this.panel, errors.stream().collect(Collectors.joining("\n")));
+            } else {
+                this.value.getProperties().addAll(properties);
+                this.propertiesModel.setProperties(this.value.getPropertiesMap());
+            }
+        });
     }
 
     private void initValues() {
@@ -95,22 +135,22 @@ public class EditConnectionDialog extends WebDialog {
         this.user.setText(this.value.getUser());
     }
 
-    private void save() {
-        this.errors = new ArrayList<>();
+    private void save(ActionEvent event) {
+        List<String> errors = new ArrayList<>();
         String nameValue = this.name.getText();
         String userValue = this.user.getText();
-        List<File> filesValue = this.file.getSelectedFiles();
 
-        if(StringUtils.isBlank(nameValue)) this.errors.add("Connection name cannot be empty.");
-        if(StringUtils.isBlank(userValue)) this.errors.add("User name cannot be empty.");
-        List<String> resources = readConfigurationFile(filesValue);
+        if(StringUtils.isBlank(nameValue)) errors.add("Connection name cannot be empty.");
+        if(StringUtils.isBlank(userValue)) errors.add("User name cannot be empty.");
+        if(this.value.getProperties() == null || this.value.getProperties().isEmpty()) {
+            errors.add("No hadoop configuration files provided.");
+        }
 
-        if(!this.errors.isEmpty()) {
-            ViewUtils.error(this.panel, this.errors.stream().collect(Collectors.joining("\n")));
+        if(!errors.isEmpty()) {
+            ViewUtils.error(this.panel, errors.stream().collect(Collectors.joining("\n")));
         } else {
             value.setName(nameValue);
             value.setUser(userValue);
-            value.setResources(resources);
             this.success = true;
             setVisible(false);
         }
@@ -121,27 +161,30 @@ public class EditConnectionDialog extends WebDialog {
         return this.success;
     }
 
-    private void cancel() {
+    private void cancel(ActionEvent event) {
         this.success = false;
         setVisible(false);
     }
 
-    private List<String> readConfigurationFile(List<File> filesValue) {
-        if(filesValue.isEmpty() || filesValue.size() > 1) {
-            errors.add("You need to select hdfs configuration file.");
-            return Collections.emptyList();
-        }
-        File file = filesValue.get(0);
+    private List<ConfigProperty> readConfigurationFile(File file, List<String> errors) {
         try {
-            return readConfigResources(file);
+            String ext = FilenameUtils.getExtension(file.getName()).toLowerCase();
+            List<ConfigProperty> res = new ArrayList<>();
+            switch (ext) {
+                case "xml": res = parseFile(new FileSystemResource(file));  break;
+                case "zip": res = readArchive(file); break;
+                default: errors.add("File should be either hadoop xml config or zip file containing configuration.");
+            }
+            this.file.setSelectedFile(null);
+            return res;
         } catch (IOException e) {
-            errors.add(String.format("Problem reading file: %s is not a valid archive.", file.getAbsolutePath()));
+            errors.add(String.format("Problem reading file: %s is not a valid configuration.", file.getAbsolutePath()));
             return Collections.emptyList();
         }
     }
 
-    private List<String> readConfigResources(File file) throws IOException {
-        List<String> results = new ArrayList<>();
+    private List<ConfigProperty> readArchive(File file) throws IOException {
+        List<ConfigProperty> results = new ArrayList<>();
         ZipFile zip = new ZipFile(file);
         Enumeration<? extends ZipEntry> entries = zip.entries();
         while(entries.hasMoreElements()) {
@@ -149,11 +192,16 @@ public class EditConnectionDialog extends WebDialog {
             String entryName = getEntryName(entry);
             if(StringUtils.equalsAny(entryName, "core-site.xml", "hdfs-site.xml")) {
                 InputStream is = zip.getInputStream(entry);
-                String content = IOUtils.toString(is, StandardCharsets.UTF_8);
-                results.add(content);
+                List<ConfigProperty> properties = parseFile(new InputStreamResource(is));
+                results.addAll(properties);
             }
         }
         return results;
+    }
+
+    private List<ConfigProperty> parseFile(Resource resource) {
+        SourceConfig config = JaxbUtils.unmarshall(resource, SourceConfig.class);
+        return config.getProperties();
     }
 
     private String getEntryName(ZipEntry entry) {

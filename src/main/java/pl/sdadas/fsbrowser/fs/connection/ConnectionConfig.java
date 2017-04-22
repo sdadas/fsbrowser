@@ -20,13 +20,10 @@ public class ConnectionConfig {
 
     private final Configuration configuration;
 
-    private final Iterable<Resource> resources;
-
-    public ConnectionConfig(String user, Iterable<Resource> resources) {
+    public ConnectionConfig(String user, Map<String, String> properties) {
         this.user = user;
-        this.resources = resources;
         try {
-            this.configuration = createConfiguration();
+            this.configuration = createConfiguration(properties);
         } catch (IOException e) {
             throw new IllegalStateException(e);
         }
@@ -35,7 +32,6 @@ public class ConnectionConfig {
     public ConnectionConfig(String user, Configuration... mergeConfigs) {
         this.user = user;
         this.configuration = mergeConfigurations(mergeConfigs);
-        this.resources = Collections.emptyList();
     }
 
     private Configuration mergeConfigurations(Configuration... configs) {
@@ -56,10 +52,10 @@ public class ConnectionConfig {
         return conf;
     }
 
-    private Configuration createConfiguration() throws IOException {
+    private Configuration createConfiguration(Map<String, String> properties) throws IOException {
         Configuration conf = new Configuration();
-        for (Resource resource : resources) {
-            conf.addResource(resource.getInputStream());
+        for (Map.Entry<String, String> entry : properties.entrySet()) {
+            conf.set(entry.getKey(), entry.getValue());
         }
         afterConfigCreated(conf);
         return conf;
