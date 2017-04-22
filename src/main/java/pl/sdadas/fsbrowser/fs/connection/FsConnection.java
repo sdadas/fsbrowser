@@ -14,15 +14,13 @@ import org.springframework.data.hadoop.fs.DistCp;
 import org.springframework.data.hadoop.fs.FsShell;
 import pl.sdadas.fsbrowser.exception.FsAccessException;
 import pl.sdadas.fsbrowser.exception.FsException;
+import pl.sdadas.fsbrowser.fs.action.CleanupAction;
 import pl.sdadas.fsbrowser.fs.action.FsAction;
 import pl.sdadas.fsbrowser.fs.action.FsckAction;
 
 import java.io.*;
 import java.security.PrivilegedExceptionAction;
-import java.util.Arrays;
-import java.util.EnumSet;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author Sławomir Dadas
@@ -192,6 +190,10 @@ public class FsConnection implements Closeable {
             shell.expunge();
             return null;
         });
+    }
+
+    public void cleanup(List<Path> paths, Date olderThan) throws FsException {
+        execute(new CleanupAction(paths, olderThan));
     }
 
     @Override

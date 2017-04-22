@@ -9,6 +9,7 @@ import com.alee.laf.rootpane.WebDialog;
 import pl.sdadas.fsbrowser.app.config.AppConfigProvider;
 import pl.sdadas.fsbrowser.app.config.AppConnection;
 import pl.sdadas.fsbrowser.utils.IconFactory;
+import pl.sdadas.fsbrowser.utils.ViewUtils;
 
 import java.awt.*;
 import java.awt.event.MouseAdapter;
@@ -51,8 +52,7 @@ public class ConnectionsDialog extends WebDialog {
         statusBar.add(createButtons());
         add(this.list, BorderLayout.CENTER);
         add(statusBar, BorderLayout.PAGE_END);
-        pack();
-        setLocationRelativeTo(getOwner());
+        ViewUtils.setupDialogWindow(this);
     }
 
     private void initListeners() {

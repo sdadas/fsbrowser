@@ -29,6 +29,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * @author Sławomir Dadas
@@ -308,7 +309,10 @@ public class FileSystemActions {
         ViewUtils.handleErrors(parent, () -> {
             Window owner = SwingUtils.getWindowAncestor(parent);
             CleanupDialog dialog = new CleanupDialog(parent.getConnection(), owner);
-            dialog.showDialog();
+            CleanupDialog.Result result = dialog.showDialog();
+            if(result != null) {
+                parent.getConnection().cleanup(result.getPaths(), result.getDate());
+            }
         });
     }
 
@@ -332,6 +336,19 @@ public class FileSystemActions {
                     parent.getModel().reloadView();
                 }
             }
+        });
+    }
+
+    public FileAction refreshAction() {
+        return FileAction.builder(this::doRefresh)
+                .name("Refresh current view")
+                .icon("refresh")
+                .get();
+    }
+
+    private void doRefresh(List<FileItem> selection) {
+        ViewUtils.handleErrors(parent, () ->  {
+            parent.getModel().reloadView();
         });
     }
 

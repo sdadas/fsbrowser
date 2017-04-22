@@ -1,7 +1,11 @@
 package pl.sdadas.fsbrowser.utils;
 
+import com.alee.extended.layout.HorizontalFlowLayout;
 import com.alee.extended.window.PopOverDirection;
 import com.alee.extended.window.PopOverLocation;
+import com.alee.laf.button.WebButton;
+import com.alee.laf.panel.WebPanel;
+import com.alee.utils.SizeUtils;
 import com.alee.utils.SwingUtils;
 import pl.sdadas.fsbrowser.common.UnsafeRunnable;
 import pl.sdadas.fsbrowser.exception.FsAccessException;
@@ -10,11 +14,45 @@ import pl.sdadas.fsbrowser.view.common.messages.MessageLevel;
 import pl.sdadas.fsbrowser.view.common.messages.MessagePopup;
 
 import javax.swing.*;
+import java.awt.*;
 
 /**
  * @author Sławomir Dadas
  */
 public final class ViewUtils {
+
+    public static void setupDialogWindow(JDialog dialog) {
+        dialog.pack();
+        dialog.setMinimumSize(dialog.getSize());
+        dialog.setLocationRelativeTo(dialog.getOwner());
+    }
+
+    public static WebPanel rightLeftPanel(JComponent... comps) {
+        return horizontalPanel(ComponentOrientation.RIGHT_TO_LEFT, null, comps);
+    }
+
+    public static WebPanel leftRightPanel(JComponent... comps) {
+        return horizontalPanel(ComponentOrientation.LEFT_TO_RIGHT, null, comps);
+    }
+
+    public static WebPanel rightLeftPanel(Integer minWidth, JComponent... comps) {
+        return horizontalPanel(ComponentOrientation.RIGHT_TO_LEFT, minWidth, comps);
+    }
+
+    public static WebPanel leftRightPanel(Integer minWidth, JComponent... comps) {
+        return horizontalPanel(ComponentOrientation.LEFT_TO_RIGHT, minWidth, comps);
+    }
+
+    public static WebPanel horizontalPanel(ComponentOrientation orientation, Integer minWidth, JComponent... comps) {
+        HorizontalFlowLayout layout = new HorizontalFlowLayout();
+        WebPanel panel = new WebPanel(layout);
+        panel.setComponentOrientation(orientation);
+        for (JComponent button : comps) {
+            if(minWidth != null) SizeUtils.setMinimumWidth(button, minWidth);
+            panel.add(button);
+        }
+        return panel;
+    }
 
     public static MessagePopup error(JComponent comp, String message) {
         return message(comp, MessageLevel.Error, "Error", message);
