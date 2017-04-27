@@ -144,6 +144,14 @@ public class FsConnection implements Closeable {
         doCopy(src, dest, true);
     }
 
+    public void rename(Path path, String name) throws FsException {
+        execute((shell, fs) -> {
+            Path to = new Path(path.getParent(), name);
+            fs.rename(path, to);
+            return null;
+        });
+    }
+
     public void distCp(String [] from, String to) throws FsException {
         execute((shell, fs) ->  {
             DistCp tool = new DistCp(this.getConfig(), null);

@@ -4,6 +4,8 @@ import com.alee.extended.breadcrumb.WebBreadcrumb;
 import com.alee.extended.breadcrumb.WebBreadcrumbButton;
 import com.alee.extended.layout.VerticalFlowLayout;
 import com.alee.laf.button.WebButton;
+import com.alee.laf.menu.WebMenuItem;
+import com.alee.laf.menu.WebPopupMenu;
 import com.alee.laf.panel.WebPanel;
 import com.alee.laf.scroll.WebScrollPane;
 import com.alee.laf.toolbar.ToolbarStyle;
@@ -22,7 +24,6 @@ import pl.sdadas.fsbrowser.view.filebrowser.FileItem;
 import pl.sdadas.fsbrowser.view.filebrowser.FileSystemTableModel;
 
 import javax.swing.*;
-import javax.swing.event.ListSelectionEvent;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.Closeable;
@@ -48,6 +49,10 @@ public class FileSystemPanel extends LoadingOverlay implements Closeable {
 
     private ClipboardHelper clipboard;
 
+    private WebPopupMenu filePopup;
+
+    private WebPopupMenu noFilePopup;
+
     private boolean closed = false;
 
     public FileSystemPanel(FsConnection connection, ClipboardHelper clipboard) {
@@ -55,6 +60,8 @@ public class FileSystemPanel extends LoadingOverlay implements Closeable {
         this.model = BeanFactory.tableModel(connection);
         this.actions = new FileSystemActions(this);
         this.clipboard = clipboard;
+        this.filePopup = createFilePopup();
+        this.noFilePopup = createNoFilePopup();
         initView();
         initListeners();
     }
@@ -62,6 +69,7 @@ public class FileSystemPanel extends LoadingOverlay implements Closeable {
     private void initListeners() {
         onPathChanged(this.model.getCurrentPath());
         this.model.addPathListener(this::onPathChanged);
+        this.browser.addMouseListener(this.contextMenuListener());
         this.browser.setTransferHandler(new FileSystemTransferHandler(this));
     }
 
@@ -82,6 +90,31 @@ public class FileSystemPanel extends LoadingOverlay implements Closeable {
         panel.add(head, BorderLayout.PAGE_START);
         panel.add(browserScroll, BorderLayout.CENTER);
         setComponent(panel);
+    }
+
+    private MouseAdapter contextMenuListener() {
+        return new MouseAdapter() {
+            @Override
+            public void mouseReleased(MouseEvent event) {
+                if(!event.isPopupTrigger()) return;
+
+                Point point = event.getPoint();
+                int rowIdx = browser.rowAtPoint(point);
+                int colIdx = browser.columnAtPoint(point);
+                if(!browser.isRowSelected(rowIdx)) {
+                    browser.changeSelection(rowIdx, colIdx, false, false);
+                }
+
+                if(rowIdx >=0) {
+                    FileItem item = model.getRow(rowIdx);
+                    if(item.isFile() || item.isDirectory()) {
+                        filePopup.show(event.getComponent(), event.getX(), event.getY());
+                    }
+                } else {
+                    noFilePopup.show(event.getComponent(), event.getX(), event.getY());
+                }
+            }
+        };
     }
 
     private void onPathChanged(Path value) {
@@ -202,6 +235,36 @@ public class FileSystemPanel extends LoadingOverlay implements Closeable {
         result.setRolloverDecoratedOnly(true);
         result.setDrawFocus(false);
         if(StringUtils.isNotBlank(action.getName())) result.setToolTipText(action.getName());
+        result.addActionListener((event) -> asyncAction(() -> action.run(browser.selectedItems())));
+        return result;
+    }
+
+    private WebPopupMenu createFilePopup() {
+        WebPopupMenu result = new WebPopupMenu();
+        result.add(createMenuItem(this.actions.copyToLocalAction()));
+        result.add(createMenuItem(this.actions.cutAction()));
+        result.add(createMenuItem(this.actions.copyAction()));
+        result.add(createMenuItem(this.actions.pasteAction()));
+        result.add(createMenuItem(this.actions.renameAction()));
+        result.add(createMenuItem(this.actions.moveToTrashAction()));
+        result.add(createMenuItem(this.actions.removeAction()));
+        result.add(createMenuItem(this.actions.previewFileAction()));
+        result.add(createMenuItem(this.actions.fsckAction()));
+        return result;
+    }
+
+    private WebPopupMenu createNoFilePopup() {
+        WebPopupMenu result = new WebPopupMenu();
+        result.add(createMenuItem(this.actions.pasteAction()));
+        result.add(createMenuItem(this.actions.refreshAction()));
+        result.add(createMenuItem(this.actions.gotoAction()));
+        result.add(createMenuItem(this.actions.emptyTrashAction()));
+        result.add(createMenuItem(this.actions.cleanupAction()));
+        return result;
+    }
+
+    private WebMenuItem createMenuItem(FileAction action) {
+        WebMenuItem result = new WebMenuItem(action.getName(), action.getIcon());
         result.addActionListener((event) -> asyncAction(() -> action.run(browser.selectedItems())));
         return result;
     }

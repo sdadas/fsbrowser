@@ -74,6 +74,7 @@ public class FileSystemTableModel extends AbstractTableModel {
 
     @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
+        if(rowIndex >= children.size()) return null;
         FileItem child = children.get(rowIndex);
         return columns[columnIndex].getColumnProvider().apply(child);
     }

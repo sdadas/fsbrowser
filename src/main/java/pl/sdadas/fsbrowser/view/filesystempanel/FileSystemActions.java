@@ -22,14 +22,11 @@ import pl.sdadas.fsbrowser.view.filebrowser.FileItem;
 import pl.sdadas.fsbrowser.view.filecontent.FileContentDialog;
 import pl.sdadas.fsbrowser.view.props.PropertiesDialog;
 
-import javax.swing.*;
 import java.awt.*;
 import java.io.File;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 /**
  * @author Sławomir Dadas
@@ -44,7 +41,7 @@ public class FileSystemActions {
 
     public FileAction fsckAction() {
         return FileAction.builder(this::doFsck)
-                .name("Check path (fsck)")
+                .name("Check (fsck)")
                 .icon("properties")
                 .predicates(this::singlePredicate)
                 .get();
@@ -281,20 +278,24 @@ public class FileSystemActions {
 
     public FileAction previewFileAction() {
         return FileAction.builder(this::doPreviewFile)
-                .name("Preview file")
+                .name("Preview")
                 .icon("preview")
-                .predicates(this::singlePredicate, this::filesOnlyPredicate)
+                .predicates(this::singlePredicate)
                 .get();
     }
 
     public void doPreviewFile(List<FileItem> selection) {
         ViewUtils.handleErrors(parent, () -> {
             FileItem item = selection.get(0);
-            FSDataInputStream stream = parent.getConnection().read(item.getPath());
-            Window owner = SwingUtils.getWindowAncestor(parent);
-            FileContentDialog dialog = new FileContentDialog(stream, item.getStatus().getLen(), owner);
-            dialog.setTitle(item.getName());
-            dialog.showDialog();
+            if(item.isDirectory()) {
+                parent.getModel().onFileClicked(item.getPath());
+            } else {
+                FSDataInputStream stream = parent.getConnection().read(item.getPath());
+                Window owner = SwingUtils.getWindowAncestor(parent);
+                FileContentDialog dialog = new FileContentDialog(stream, item.getStatus().getLen(), owner);
+                dialog.setTitle(item.getName());
+                dialog.showDialog();
+            }
         });
     }
 
@@ -349,6 +350,27 @@ public class FileSystemActions {
     private void doRefresh(List<FileItem> selection) {
         ViewUtils.handleErrors(parent, () ->  {
             parent.getModel().reloadView();
+        });
+    }
+
+    public FileAction renameAction() {
+        return FileAction.builder(this::doRename)
+                .name("Rename")
+                .icon("file-rename")
+                .predicates(this::singlePredicate)
+                .get();
+    }
+
+    private void doRename(List<FileItem> selection) {
+        ViewUtils.handleErrors(parent, () ->  {
+            FileItem item = selection.get(0);
+            Object result = WebOptionPane.showInputDialog(parent, "Rename to", "Rename",
+                    WebOptionPane.QUESTION_MESSAGE, null, null, item.getName());
+            if(result != null && result instanceof String) {
+                String value = StringUtils.strip((String) result);
+                parent.getConnection().rename(item.getPath(), value);
+                parent.getModel().reloadView();
+            }
         });
     }
 
