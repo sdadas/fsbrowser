@@ -54,19 +54,19 @@ public final class ViewUtils {
         return panel;
     }
 
-    public static MessagePopup error(JComponent comp, String message) {
+    public static MessagePopup error(Component comp, String message) {
         return message(comp, MessageLevel.Error, "Error", message);
     }
 
-    public static MessagePopup warning(JComponent comp, String message) {
+    public static MessagePopup warning(Component comp, String message) {
         return message(comp, MessageLevel.Warning, "Warning", message);
     }
 
-    public static MessagePopup info(JComponent comp, String message) {
+    public static MessagePopup info(Component comp, String message) {
         return message(comp, MessageLevel.Info, "Information", message);
     }
 
-    public static MessagePopup message(JComponent comp, MessageLevel level, String title, String message) {
+    public static MessagePopup message(Component comp, MessageLevel level, String title, String message) {
         MessagePopup result = new MessagePopup(SwingUtils.getWindowAncestor(comp));
         result.setLevel(level);
         result.setTitle(title);
@@ -75,7 +75,7 @@ public final class ViewUtils {
         return result;
     }
 
-    public static void handleErrors(JComponent comp, UnsafeRunnable runnable) {
+    public static void handleErrors(Component comp, UnsafeRunnable runnable) {
         try {
             runnable.run();
         } catch(FsAccessException ex) {

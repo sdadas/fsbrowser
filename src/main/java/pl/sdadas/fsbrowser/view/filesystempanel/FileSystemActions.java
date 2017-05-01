@@ -17,6 +17,7 @@ import pl.sdadas.fsbrowser.fs.connection.ConnectionConfig;
 import pl.sdadas.fsbrowser.fs.connection.FsConnection;
 import pl.sdadas.fsbrowser.utils.FileSystemUtils;
 import pl.sdadas.fsbrowser.utils.ViewUtils;
+import pl.sdadas.fsbrowser.view.chmod.ChmodDialog;
 import pl.sdadas.fsbrowser.view.cleanup.CleanupDialog;
 import pl.sdadas.fsbrowser.view.filebrowser.FileItem;
 import pl.sdadas.fsbrowser.view.filecontent.FileContentDialog;
@@ -369,6 +370,35 @@ public class FileSystemActions {
             if(result != null && result instanceof String) {
                 String value = StringUtils.strip((String) result);
                 parent.getConnection().rename(item.getPath(), value);
+                parent.getModel().reloadView();
+            }
+        });
+    }
+
+    public FileAction chownAction() {
+        return FileAction.builder((sel) -> {})
+                .name("Change owner/group")
+                .icon("chown")
+                .get();
+    }
+
+    public FileAction chmodAction() {
+        return FileAction.builder(this::doChmod)
+                .name("Change permissions")
+                .icon("chmod")
+                .predicates(this::singlePredicate)
+                .get();
+    }
+
+    private void doChmod(List<FileItem> selection) {
+        ViewUtils.handleErrors(parent, () -> {
+            FileItem item = selection.get(0);
+            Path path = item.getPath();
+            if(path == null) return;
+            ChmodDialog dialog = new ChmodDialog(parent.getConnection(), path, SwingUtils.getWindowAncestor(parent));
+            String chmod = dialog.showDialog();
+            if(StringUtils.isNotBlank(chmod)) {
+                parent.getConnection().chmod(path, chmod, dialog.isRecursive());
                 parent.getModel().reloadView();
             }
         });

@@ -8,6 +8,7 @@ import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.hadoop.security.AccessControlException;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.springframework.data.hadoop.fs.DistCp;
@@ -202,6 +203,13 @@ public class FsConnection implements Closeable {
 
     public void cleanup(List<Path> paths, Date olderThan) throws FsException {
         execute(new CleanupAction(paths, olderThan));
+    }
+
+    public void chmod(Path path, String chmod, boolean recursive) throws FsException {
+        execute((shell, fs) -> {
+            shell.chmod(recursive, chmod, path.toUri().getPath());
+            return null;
+        });
     }
 
     @Override
