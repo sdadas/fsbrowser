@@ -18,6 +18,7 @@ import pl.sdadas.fsbrowser.fs.connection.FsConnection;
 import pl.sdadas.fsbrowser.utils.FileSystemUtils;
 import pl.sdadas.fsbrowser.utils.ViewUtils;
 import pl.sdadas.fsbrowser.view.chmod.ChmodDialog;
+import pl.sdadas.fsbrowser.view.chown.ChownDialog;
 import pl.sdadas.fsbrowser.view.cleanup.CleanupDialog;
 import pl.sdadas.fsbrowser.view.filebrowser.FileItem;
 import pl.sdadas.fsbrowser.view.filecontent.FileContentDialog;
@@ -376,10 +377,31 @@ public class FileSystemActions {
     }
 
     public FileAction chownAction() {
-        return FileAction.builder((sel) -> {})
+        return FileAction.builder(this::doChown)
                 .name("Change owner/group")
                 .icon("chown")
+                .predicates(this::singlePredicate)
                 .get();
+    }
+
+    private void doChown(List<FileItem> selection) {
+        ViewUtils.handleErrors(parent, () -> {
+            FileItem item = selection.get(0);
+            Path path = item.getPath();
+            if(path == null) return;
+            ChownDialog dialog = new ChownDialog(item, SwingUtils.getWindowAncestor(parent));
+            ChownDialog.Result chown = dialog.showDialog();
+            if(chown != null) {
+                FsConnection connection = parent.getConnection();
+                if(StringUtils.isNotBlank(chown.getOwner())) {
+                    connection.chown(path, chown.getOwner(), chown.isRecursive());
+                }
+                if(StringUtils.isNotBlank(chown.getGroup())) {
+                    connection.chgrp(path, chown.getGroup(), chown.isRecursive());
+                }
+                parent.getModel().reloadView();
+            }
+        });
     }
 
     public FileAction chmodAction() {

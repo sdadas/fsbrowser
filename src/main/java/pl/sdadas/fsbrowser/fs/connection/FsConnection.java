@@ -212,6 +212,22 @@ public class FsConnection implements Closeable {
         });
     }
 
+    public void chown(Path path, String owner, boolean recursive) throws FsException {
+        execute((shell, fs) -> {
+            String uri = path.toUri().getPath();
+            FsShellPermissions.changePermissions(fs, fs.getConf(), FsShellPermissions.Op.CHOWN, recursive, owner, uri);
+            return null;
+        });
+    }
+
+    public void chgrp(Path path, String group, boolean recursive) throws FsException {
+        execute((shell, fs) -> {
+            String uri = path.toUri().getPath();
+            FsShellPermissions.changePermissions(fs, fs.getConf(), FsShellPermissions.Op.CHGRP, recursive, group, uri);
+            return null;
+        });
+    }
+
     @Override
     public void close() throws IOException {
         IOUtils.closeQuietly(fs);
