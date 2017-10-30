@@ -21,6 +21,7 @@ import pl.sdadas.fsbrowser.view.chmod.ChmodDialog;
 import pl.sdadas.fsbrowser.view.chown.ChownDialog;
 import pl.sdadas.fsbrowser.view.cleanup.CleanupDialog;
 import pl.sdadas.fsbrowser.view.filebrowser.FileItem;
+import pl.sdadas.fsbrowser.view.filebrowser.FileSystemTableModel;
 import pl.sdadas.fsbrowser.view.filecontent.FileContentDialog;
 import pl.sdadas.fsbrowser.view.props.PropertiesDialog;
 
@@ -273,6 +274,7 @@ public class FileSystemActions {
                     WebOptionPane.QUESTION_MESSAGE, null, null, path);
             if(result != null && result instanceof String) {
                 String value = StringUtils.strip((String) result);
+                parent.clearFilter();
                 parent.getModel().onFileClicked(new Path(value));
             }
         });
@@ -290,6 +292,7 @@ public class FileSystemActions {
         ViewUtils.handleErrors(parent, () -> {
             FileItem item = selection.get(0);
             if(item.isDirectory()) {
+                parent.clearFilter();
                 parent.getModel().onFileClicked(item.getPath());
             } else {
                 FSDataInputStream stream = parent.getConnection().read(item.getPath());
@@ -422,6 +425,15 @@ public class FileSystemActions {
             if(StringUtils.isNotBlank(chmod)) {
                 parent.getConnection().chmod(path, chmod, dialog.isRecursive());
                 parent.getModel().reloadView();
+            }
+        });
+    }
+
+    private void doLoadAllRows(List<FileItem> selection) {
+        ViewUtils.handleErrors(parent, () ->  {
+            FileSystemTableModel model = parent.getModel();
+            if(model.hasMoreRows()) {
+                model.loadAllRows();
             }
         });
     }

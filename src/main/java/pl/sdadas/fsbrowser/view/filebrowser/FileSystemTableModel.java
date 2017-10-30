@@ -11,6 +11,7 @@ import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author Sławomir Dadas
@@ -28,6 +29,8 @@ public class FileSystemTableModel extends AbstractTableModel {
     private FileBrowserColumn [] columns = createColumns();
 
     private boolean hasMoreRows;
+
+    private AtomicBoolean loading = new AtomicBoolean(false);
 
     private List<PathListener> pathListeners = new ArrayList<>();
 
@@ -83,6 +86,7 @@ public class FileSystemTableModel extends AbstractTableModel {
         if(value == null) return;
         FileStatus status = connection.status(value);
         if(status.isFile()) return;
+        loading.set(true);
         loadRows(status);
     }
 
@@ -96,16 +100,23 @@ public class FileSystemTableModel extends AbstractTableModel {
         } else if(status.isFile()) {
             return;
         }
+        loading.set(true);
         loadRows(status);
     }
 
     public void reloadView() throws FsException {
+        loading.set(true);
         loadRows(this.path);
     }
 
     public void loadMoreRows() {
-        if(!hasMoreRows) return;
+        if(!hasMoreRows || !loading.compareAndSet(false, true)) return;
         fetchRows(100, false);
+    }
+
+    public void loadAllRows() {
+        if(!hasMoreRows || !loading.compareAndSet(false, true)) return;
+        fetchRows(Integer.MAX_VALUE, false);
     }
 
     private void loadRows(FileStatus parent) throws FsException {
@@ -122,6 +133,14 @@ public class FileSystemTableModel extends AbstractTableModel {
     }
 
     private void fetchRows(int rows, boolean initial) {
+        try {
+            doFetchRows(rows, initial);
+        } finally {
+            loading.set(false);
+        }
+    }
+
+    private void doFetchRows(int rows, boolean initial) {
         if(iterator == null) return;
         int startSize = this.children.size();
         int idx = 0;
@@ -155,6 +174,17 @@ public class FileSystemTableModel extends AbstractTableModel {
             FileBrowserColumn.create("Modified", FileItem::getModificationTime).minWidth(130),
             FileBrowserColumn.create("Size", FileItem::getSize),
         };
+    }
+
+    public boolean hasMoreRows() {
+        return this.hasMoreRows;
+    }
+
+    public int getColumnIndex(String name) {
+        for (int i = 0; i < this.columns.length; i++) {
+            if(this.columns[i].getName().equalsIgnoreCase(name)) return i;
+        }
+        return -1;
     }
 
     public FileBrowserColumn getColumn(int idx) {

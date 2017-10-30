@@ -2,16 +2,13 @@ package pl.sdadas.fsbrowser.view.filebrowser;
 
 import com.alee.laf.table.WebTable;
 import com.google.common.collect.Lists;
-import pl.sdadas.fsbrowser.utils.ViewUtils;
 
 import javax.swing.*;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
+import javax.swing.table.TableRowSorter;
 import java.awt.*;
-import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.util.List;
 
 /**
@@ -21,11 +18,18 @@ public class FileBrowser extends WebTable {
 
     private final FileSystemTableModel model;
 
+    private final FileBrowserRowSorter sorter;
+
     public FileBrowser(FileSystemTableModel model) {
         super(model);
         this.model = model;
+        this.sorter = this.createSorter();
         this.init();
         this.initColumns();
+    }
+
+    private FileBrowserRowSorter createSorter() {
+        return new FileBrowserRowSorter(this.model);
     }
 
     private void init() {
@@ -35,6 +39,7 @@ public class FileBrowser extends WebTable {
         setDropMode(DropMode.INSERT);
         setFillsViewportHeight(true);
         setAutoResizeMode(AUTO_RESIZE_ALL_COLUMNS);
+        setRowSorter(this.sorter);
         getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "startEditing");
     }
 
@@ -62,5 +67,9 @@ public class FileBrowser extends WebTable {
             selection.add(this.model.getRow(idx));
         }
         return selection;
+    }
+
+    public void filter(String text) {
+        this.sorter.setRowFilter(new FileBrowserFilter(text));
     }
 }

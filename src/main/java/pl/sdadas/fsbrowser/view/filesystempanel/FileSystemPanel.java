@@ -2,12 +2,14 @@ package pl.sdadas.fsbrowser.view.filesystempanel;
 
 import com.alee.extended.breadcrumb.WebBreadcrumb;
 import com.alee.extended.breadcrumb.WebBreadcrumbButton;
+import com.alee.extended.image.WebImage;
 import com.alee.extended.layout.VerticalFlowLayout;
 import com.alee.laf.button.WebButton;
 import com.alee.laf.menu.WebMenuItem;
 import com.alee.laf.menu.WebPopupMenu;
 import com.alee.laf.panel.WebPanel;
 import com.alee.laf.scroll.WebScrollPane;
+import com.alee.laf.text.WebTextField;
 import com.alee.laf.toolbar.ToolbarStyle;
 import com.alee.laf.toolbar.WebToolBar;
 import org.apache.commons.io.IOUtils;
@@ -55,6 +57,8 @@ public class FileSystemPanel extends LoadingOverlay implements Closeable {
 
     private boolean closed = false;
 
+    private WebTextField filter;
+
     public FileSystemPanel(FsConnection connection, ClipboardHelper clipboard) {
         this.connection = connection;
         this.model = BeanFactory.tableModel(connection);
@@ -74,6 +78,7 @@ public class FileSystemPanel extends LoadingOverlay implements Closeable {
     }
 
     private void initView() {
+        this.filter = createFilter();
         this.breadcrumb = createBreadcrumb();
         this.browser = createFileBrowser();
         this.toolbar = createToolBar();
@@ -128,6 +133,25 @@ public class FileSystemPanel extends LoadingOverlay implements Closeable {
         this.breadcrumb.repaint();
     }
 
+    private WebTextField createFilter() {
+        WebTextField result = new WebTextField();
+        result.setMinimumWidth(200);
+        result.setTrailingComponent(new WebImage(IconFactory.getIcon("search")));
+        result.addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyPressed(KeyEvent event) {
+                if (event.getKeyCode() == KeyEvent.VK_ENTER) {
+                    String text = result.getText();
+                    if(StringUtils.isNotBlank(text) && model.hasMoreRows()) {
+                        asyncAction(model::loadAllRows);
+                    }
+                    browser.filter(text);
+                }
+            }
+        });
+        return result;
+    }
+
     private WebBreadcrumbButton createBreadcrumbButton(Path path) {
         String name = path.getName();
         if(StringUtils.isBlank(name)) {
@@ -137,6 +161,7 @@ public class FileSystemPanel extends LoadingOverlay implements Closeable {
         button.setIcon(IconFactory.getIcon("folder-small"));
         button.addActionListener(event -> {
             ViewUtils.handleErrors(this, () -> {
+                this.clearFilter();
                 this.model.onFileClicked(path);
             });
         });
@@ -201,6 +226,7 @@ public class FileSystemPanel extends LoadingOverlay implements Closeable {
             if(item.isFile()) {
                 asyncAction(() -> this.actions.doPreviewFile(Collections.singletonList(item)));
             } else {
+                this.clearFilter();
                 model.onFileClicked(idx);
             }
         });
@@ -229,6 +255,7 @@ public class FileSystemPanel extends LoadingOverlay implements Closeable {
         result.add(createToolButton(this.actions.gotoAction()));
         result.add(createToolButton(this.actions.emptyTrashAction()));
         result.add(createToolButton(this.actions.cleanupAction()));
+        result.addToEnd(this.filter);
         return result;
     }
 
@@ -309,5 +336,10 @@ public class FileSystemPanel extends LoadingOverlay implements Closeable {
 
     public FileSystemActions getActions() {
         return actions;
+    }
+
+    public void clearFilter() {
+        this.filter.setText("");
+        this.browser.filter("");
     }
 }
