@@ -137,6 +137,8 @@ public class FileSystemPanel extends LoadingOverlay implements Closeable {
         WebTextField result = new WebTextField();
         result.setMinimumWidth(200);
         result.setTrailingComponent(new WebImage(IconFactory.getIcon("search")));
+        result.setInputPrompt("Press ENTER to filter files");
+        result.setHideInputPromptOnFocus(false);
         result.addKeyListener(new KeyAdapter() {
             @Override
             public void keyPressed(KeyEvent event) {
