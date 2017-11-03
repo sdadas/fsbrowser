@@ -1,28 +1,22 @@
 package pl.sdadas.fsbrowser.app;
 
-import com.google.common.collect.Lists;
-import org.springframework.core.io.ByteArrayResource;
-import org.springframework.core.io.ClassPathResource;
-import org.springframework.core.io.Resource;
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
 import pl.sdadas.fsbrowser.app.clipboard.ClipboardHelper;
 import pl.sdadas.fsbrowser.app.config.AppConfigProvider;
 import pl.sdadas.fsbrowser.app.config.AppConnection;
-import pl.sdadas.fsbrowser.exception.FsAccessException;
 import pl.sdadas.fsbrowser.exception.FsException;
 import pl.sdadas.fsbrowser.fs.connection.ConnectionConfig;
 import pl.sdadas.fsbrowser.fs.connection.FsConnection;
 import pl.sdadas.fsbrowser.view.filebrowser.FileSystemTableModel;
-import pl.sdadas.fsbrowser.view.filesystempanel.FileSystemPanel;
 import pl.sdadas.fsbrowser.view.mainwindow.MainPanel;
 import pl.sdadas.fsbrowser.view.mainwindow.MainWindow;
 
-import javax.swing.*;
-import java.awt.*;
-import java.nio.charset.StandardCharsets;
-import java.util.*;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 
 /**
  * @author Sławomir Dadas
@@ -52,7 +46,7 @@ public final class BeanFactory {
     }
 
     public static MainPanel mainPanel() {
-        return singleton(MainPanel.class, () -> new MainPanel(configProvider(), clipboardHelper()));
+        return singleton(MainPanel.class, () -> new MainPanel(configProvider(), clipboardHelper(), executorService()));
     }
 
     public static MainWindow mainWindow() {
@@ -61,6 +55,13 @@ public final class BeanFactory {
 
     public static AppConfigProvider configProvider() {
         return singleton(AppConfigProvider.class, AppConfigProvider::new);
+    }
+
+    public static ListeningExecutorService executorService() {
+        return singleton(ListeningExecutorService.class, () -> {
+            ExecutorService executor = Executors.newFixedThreadPool(3);
+            return MoreExecutors.listeningDecorator(executor);
+        });
     }
 
     @SuppressWarnings("unchecked")

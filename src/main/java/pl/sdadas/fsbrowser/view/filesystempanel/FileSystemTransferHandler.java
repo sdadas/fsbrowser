@@ -5,6 +5,7 @@ import org.apache.hadoop.fs.Path;
 import pl.sdadas.fsbrowser.app.clipboard.ClipboardAction;
 import pl.sdadas.fsbrowser.app.clipboard.ClipboardHelper;
 import pl.sdadas.fsbrowser.utils.ViewUtils;
+import pl.sdadas.fsbrowser.view.common.loading.Progress;
 import pl.sdadas.fsbrowser.view.filebrowser.FileItem;
 
 import javax.swing.*;
@@ -59,7 +60,8 @@ public class FileSystemTransferHandler extends TransferHandler {
                 parent.asyncAction(() -> moveFiles(paths));
             } else {
                 List<File> files = (List<File>) transferable.getTransferData(DataFlavor.javaFileListFlavor);
-                parent.asyncAction(() -> importFiles(files));
+                Progress progress = new Progress();
+                parent.asyncAction(() -> importFiles(files, progress), progress);
             }
         } catch (IOException | UnsupportedFlavorException ex) {
             SwingUtils.invokeLater(() -> ViewUtils.error(parent, ex.getMessage()));
@@ -73,10 +75,10 @@ public class FileSystemTransferHandler extends TransferHandler {
         });
     }
 
-    private void importFiles(List<File> files) {
+    private void importFiles(List<File> files, Progress progress) {
         ViewUtils.handleErrors(parent, () -> {
             Path dest = parent.getModel().getCurrentPath();
-            parent.getConnection().copyFromLocal(files.toArray(new File[files.size()]), dest);
+            parent.getConnection().copyFromLocal(files.toArray(new File[files.size()]), dest, progress);
             parent.getModel().reloadView();
         });
     }

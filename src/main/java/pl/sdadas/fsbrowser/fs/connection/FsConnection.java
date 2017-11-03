@@ -8,7 +8,6 @@ import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.hadoop.security.AccessControlException;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.springframework.data.hadoop.fs.DistCp;
@@ -16,8 +15,11 @@ import org.springframework.data.hadoop.fs.FsShell;
 import pl.sdadas.fsbrowser.exception.FsAccessException;
 import pl.sdadas.fsbrowser.exception.FsException;
 import pl.sdadas.fsbrowser.fs.action.CleanupAction;
+import pl.sdadas.fsbrowser.fs.action.CopyFromLocalAction;
 import pl.sdadas.fsbrowser.fs.action.FsAction;
 import pl.sdadas.fsbrowser.fs.action.FsckAction;
+import pl.sdadas.fsbrowser.fs.common.ProgressFileSystemListener;
+import pl.sdadas.fsbrowser.view.common.loading.Progress;
 
 import java.io.*;
 import java.security.PrivilegedExceptionAction;
@@ -96,11 +98,11 @@ public class FsConnection implements Closeable {
     }
 
     public void copyFromLocal(File[] files, Path dest) throws FsException {
-        execute((shell, fs) -> {
-            Path[] src = Arrays.stream(files).map(f -> new Path(f.getAbsolutePath())).toArray(Path[]::new);
-            fs.copyFromLocalFile(false, true, src, dest);
-            return null;
-        });
+        execute(new CopyFromLocalAction(files, dest));
+    }
+
+    public void copyFromLocal(File[] files, Path dest, Progress progress) throws FsException {
+        execute(new CopyFromLocalAction(files, dest, progress));
     }
 
     public void copyToLocal(Path[] paths, File dest) throws FsException {

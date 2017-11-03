@@ -9,6 +9,7 @@ import com.alee.laf.button.WebButton;
 import com.alee.laf.menu.*;
 import com.alee.laf.panel.WebPanel;
 import com.alee.utils.SwingUtils;
+import com.google.common.util.concurrent.ListeningExecutorService;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 import pl.sdadas.fsbrowser.app.BeanFactory;
@@ -35,8 +36,11 @@ public class MainPanel extends WebPanel {
 
     private final ClipboardHelper clipboard;
 
-    public MainPanel(AppConfigProvider configProvider, ClipboardHelper clipboard) {
+    private final ListeningExecutorService executor;
+
+    public MainPanel(AppConfigProvider configProvider, ClipboardHelper clipboard, ListeningExecutorService executor) {
         super(new BorderLayout());
+        this.executor = executor;
         this.configProvider = configProvider;
         this.pane = createDocumentPane();
         this.statusBar = createStatusBar();
@@ -78,7 +82,7 @@ public class MainPanel extends WebPanel {
     }
 
     private void onConnect(AppConnection connection) {
-        FileSystemPanel fspanel = new FileSystemPanel(BeanFactory.connection(connection), this.clipboard);
+        FileSystemPanel fspanel = new FileSystemPanel(BeanFactory.connection(connection), this.clipboard, this.executor);
         String id = RandomStringUtils.randomAlphabetic(32);
         DocumentData document = new DocumentData(id, IconFactory.getIcon("disk"), connection.getName(), fspanel);
         this.pane.openDocument(document);

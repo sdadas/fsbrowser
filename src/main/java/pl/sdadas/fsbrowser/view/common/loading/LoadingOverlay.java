@@ -1,10 +1,17 @@
 package pl.sdadas.fsbrowser.view.common.loading;
 
+import com.alee.extended.layout.VerticalFlowLayout;
+import com.alee.extended.panel.VerticalPanel;
 import com.alee.extended.panel.WebOverlay;
+import com.alee.laf.label.WebLabel;
 import com.alee.laf.panel.WebPanel;
 import com.alee.laf.progressbar.WebProgressBar;
 import com.alee.utils.SwingUtils;
 import com.alee.utils.swing.EmptyMouseAdapter;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListeningExecutorService;
+import org.apache.commons.lang3.StringUtils;
+import pl.sdadas.fsbrowser.utils.ViewUtils;
 
 import javax.swing.*;
 import java.awt.*;
@@ -14,15 +21,28 @@ import java.awt.*;
  */
 public class LoadingOverlay extends WebOverlay {
 
+    private final static String DEFAULT_PROGRESS = "Please wait...";
+
     private final BackgroundOverlay background;
+
+    private final WebLabel label;
+
+    private final WebProgressBar progressBar;
 
     private final WebPanel loading;
 
-    public LoadingOverlay() {
-        this.loading = createLoadinOverlay();
+    private final ListeningExecutorService executor;
+
+    public LoadingOverlay(ListeningExecutorService executor) {
+        this.progressBar = createProgressBar();
+        this.label = createLabel();
+        VerticalPanel vp = new VerticalPanel(this.label, this.progressBar);
+        vp.setMargin(5);
+        this.loading = new WebPanel(true, vp);
         this.loading.setVisible(false);
         this.background = new BackgroundOverlay();
         this.background.setVisible(false);
+        this.executor = executor;
         addOverlay(background);
         addOverlay(loading, SwingConstants.CENTER, SwingConstants.CENTER);
     }
@@ -38,24 +58,45 @@ public class LoadingOverlay extends WebOverlay {
     }
 
     public void asyncAction(Runnable runnable) {
-        busy(true);
-        Thread thread = new Thread(() -> {
-            try {
-                runnable.run();
-            } finally {
-                busy(false);
-            }
-        });
-        thread.start();
+        asyncAction(runnable, null);
     }
 
-    private WebPanel createLoadinOverlay() {
+    public void asyncAction(Runnable runnable, Progress progress) {
+        busy(true);
+        ListenableFuture<?> future = executor.submit(runnable);
+        future.addListener(() -> {
+            SwingUtils.invokeLater(() -> this.label.setText(DEFAULT_PROGRESS));
+            busy(false);
+        }, executor);
+        if(progress != null) {
+            executor.submit(() -> this.trackProgress(future, progress));
+        }
+    }
+
+    private void trackProgress(ListenableFuture<?> future, Progress progress) {
+        while(!future.isDone()) {
+            try {
+                Thread.sleep(1000L);
+                String val = progress.getValue();
+                if(StringUtils.isNotBlank(val)) {
+                    SwingUtils.invokeLater(() -> this.label.setText(val));
+                }
+            } catch (InterruptedException e) {
+                return;
+            }
+        }
+    }
+
+    private WebProgressBar createProgressBar() {
         WebProgressBar progress = new WebProgressBar();
         progress.setIndeterminate(true);
-        progress.setStringPainted(true);
+        progress.setStringPainted(false);
         progress.setPreferredSize(new Dimension(200, 20));
-        progress.setString("Please wait...");
-        return new WebPanel(true, progress);
+        return progress;
+    }
+
+    private WebLabel createLabel() {
+        return new WebLabel(DEFAULT_PROGRESS, SwingConstants.CENTER);
     }
 
     private class BackgroundOverlay extends JPanel {

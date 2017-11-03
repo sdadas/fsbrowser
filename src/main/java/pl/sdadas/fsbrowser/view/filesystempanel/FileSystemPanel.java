@@ -12,6 +12,7 @@ import com.alee.laf.scroll.WebScrollPane;
 import com.alee.laf.text.WebTextField;
 import com.alee.laf.toolbar.ToolbarStyle;
 import com.alee.laf.toolbar.WebToolBar;
+import com.google.common.util.concurrent.ListeningExecutorService;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.fs.Path;
@@ -41,6 +42,8 @@ public class FileSystemPanel extends LoadingOverlay implements Closeable {
 
     private final FileSystemTableModel model;
 
+    private final ListeningExecutorService executor;
+
     private WebBreadcrumb breadcrumb;
 
     private WebToolBar toolbar;
@@ -59,9 +62,11 @@ public class FileSystemPanel extends LoadingOverlay implements Closeable {
 
     private WebTextField filter;
 
-    public FileSystemPanel(FsConnection connection, ClipboardHelper clipboard) {
+    public FileSystemPanel(FsConnection connection, ClipboardHelper clipboard, ListeningExecutorService executor) {
+        super(executor);
         this.connection = connection;
         this.model = BeanFactory.tableModel(connection);
+        this.executor = executor;
         this.actions = new FileSystemActions(this);
         this.clipboard = clipboard;
         this.filePopup = createFilePopup();
