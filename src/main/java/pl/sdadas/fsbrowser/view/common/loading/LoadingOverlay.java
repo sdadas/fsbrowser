@@ -36,10 +36,7 @@ public class LoadingOverlay extends WebOverlay {
     public LoadingOverlay(ListeningExecutorService executor) {
         this.progressBar = createProgressBar();
         this.label = createLabel();
-        VerticalPanel vp = new VerticalPanel(this.label, this.progressBar);
-        vp.setMargin(5);
-        this.loading = new WebPanel(true, vp);
-        this.loading.setVisible(false);
+        this.loading = createPanel();
         this.background = new BackgroundOverlay();
         this.background.setVisible(false);
         this.executor = executor;
@@ -64,10 +61,7 @@ public class LoadingOverlay extends WebOverlay {
     public void asyncAction(Runnable runnable, Progress progress) {
         busy(true);
         ListenableFuture<?> future = executor.submit(runnable);
-        future.addListener(() -> {
-            SwingUtils.invokeLater(() -> this.label.setText(DEFAULT_PROGRESS));
-            busy(false);
-        }, executor);
+        future.addListener(() -> busy(false), executor);
         if(progress != null) {
             executor.submit(() -> this.trackProgress(future, progress));
         }
@@ -79,12 +73,18 @@ public class LoadingOverlay extends WebOverlay {
                 Thread.sleep(1000L);
                 String val = progress.getValue();
                 if(StringUtils.isNotBlank(val)) {
-                    SwingUtils.invokeLater(() -> this.label.setText(val));
+                    setProgress(val);
                 }
             } catch (InterruptedException e) {
+                setProgress(DEFAULT_PROGRESS);
                 return;
             }
         }
+        setProgress(DEFAULT_PROGRESS);
+    }
+
+    private void setProgress(String text) {
+        SwingUtils.invokeLater(() -> this.label.setText(text));
     }
 
     private WebProgressBar createProgressBar() {
@@ -97,6 +97,14 @@ public class LoadingOverlay extends WebOverlay {
 
     private WebLabel createLabel() {
         return new WebLabel(DEFAULT_PROGRESS, SwingConstants.CENTER);
+    }
+
+    private WebPanel createPanel() {
+        VerticalPanel vp = new VerticalPanel(this.label, this.progressBar);
+        vp.setMargin(5);
+        WebPanel res = new WebPanel(true, vp);
+        res.setVisible(false);
+        return res;
     }
 
     private class BackgroundOverlay extends JPanel {

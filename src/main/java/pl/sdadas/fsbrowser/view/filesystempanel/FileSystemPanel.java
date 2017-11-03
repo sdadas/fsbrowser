@@ -22,6 +22,7 @@ import pl.sdadas.fsbrowser.fs.connection.FsConnection;
 import pl.sdadas.fsbrowser.utils.IconFactory;
 import pl.sdadas.fsbrowser.utils.ViewUtils;
 import pl.sdadas.fsbrowser.view.common.loading.LoadingOverlay;
+import pl.sdadas.fsbrowser.view.common.loading.Progress;
 import pl.sdadas.fsbrowser.view.filebrowser.FileBrowser;
 import pl.sdadas.fsbrowser.view.filebrowser.FileItem;
 import pl.sdadas.fsbrowser.view.filebrowser.FileSystemTableModel;
@@ -271,7 +272,7 @@ public class FileSystemPanel extends LoadingOverlay implements Closeable {
         result.setRolloverDecoratedOnly(true);
         result.setDrawFocus(false);
         if(StringUtils.isNotBlank(action.getName())) result.setToolTipText(action.getName());
-        result.addActionListener((event) -> asyncAction(() -> action.run(browser.selectedItems())));
+        result.addActionListener((event) -> invokeAsync(action));
         return result;
     }
 
@@ -303,8 +304,17 @@ public class FileSystemPanel extends LoadingOverlay implements Closeable {
 
     private WebMenuItem createMenuItem(FileAction action) {
         WebMenuItem result = new WebMenuItem(action.getName(), action.getIcon());
-        result.addActionListener((event) -> asyncAction(() -> action.run(browser.selectedItems())));
+        result.addActionListener((event) -> invokeAsync(action));
         return result;
+    }
+
+    private void invokeAsync(FileAction action) {
+        if(action.supportsProgress()) {
+            Progress progress = new Progress();
+            asyncAction(() -> action.run(browser.selectedItems(), progress), progress);
+        } else {
+            asyncAction(() -> action.run(browser.selectedItems()));
+        }
     }
 
     public FsConnection getConnection() {

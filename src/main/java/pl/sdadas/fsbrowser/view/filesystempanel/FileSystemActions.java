@@ -20,6 +20,7 @@ import pl.sdadas.fsbrowser.utils.ViewUtils;
 import pl.sdadas.fsbrowser.view.chmod.ChmodDialog;
 import pl.sdadas.fsbrowser.view.chown.ChownDialog;
 import pl.sdadas.fsbrowser.view.cleanup.CleanupDialog;
+import pl.sdadas.fsbrowser.view.common.loading.Progress;
 import pl.sdadas.fsbrowser.view.filebrowser.FileItem;
 import pl.sdadas.fsbrowser.view.filebrowser.FileSystemTableModel;
 import pl.sdadas.fsbrowser.view.filecontent.FileContentDialog;
@@ -71,12 +72,12 @@ public class FileSystemActions {
                 .get();
     }
 
-    private void doCopyFromLocal(List<FileItem> selection) {
+    private void doCopyFromLocal(List<FileItem> selection, Progress progress) {
         File[] files = selectFiles();
         if(files.length == 0) return;
 
         ViewUtils.handleErrors(parent, () -> {
-            parent.getConnection().copyFromLocal(files, parent.getModel().getCurrentPath());
+            parent.getConnection().copyFromLocal(files, parent.getModel().getCurrentPath(), progress);
             parent.getModel().reloadView();
         });
     }

@@ -1,12 +1,15 @@
 package pl.sdadas.fsbrowser.view.filesystempanel;
 
 import com.google.common.collect.Lists;
+import org.apache.commons.lang3.Validate;
 import pl.sdadas.fsbrowser.utils.IconFactory;
+import pl.sdadas.fsbrowser.view.common.loading.Progress;
 import pl.sdadas.fsbrowser.view.filebrowser.FileItem;
 
 import javax.swing.*;
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 /**
@@ -15,6 +18,8 @@ import java.util.function.Consumer;
 public class FileAction {
 
     private final Consumer<List<FileItem>> runnable;
+
+    private final BiConsumer<List<FileItem>, Progress> progressRunnable;
 
     private List<ActionPredicate> predicates = Lists.newArrayList();
 
@@ -25,11 +30,23 @@ public class FileAction {
     private String tooltip;
 
     public static FileAction.Buider builder(Consumer<List<FileItem>> runnable) {
+        Validate.notNull(runnable);
+        return new Buider(runnable);
+    }
+
+    public static FileAction.Buider builder(BiConsumer<List<FileItem>, Progress> runnable) {
+        Validate.notNull(runnable);
         return new Buider(runnable);
     }
 
     private FileAction(Consumer<List<FileItem>> action) {
         this.runnable = action;
+        this.progressRunnable = null;
+    }
+
+    private FileAction(BiConsumer<List<FileItem>, Progress> action) {
+        this.progressRunnable = action;
+        this.runnable = null;
     }
 
     public boolean canAcitvate(List<FileItem> selection) {
@@ -41,7 +58,24 @@ public class FileAction {
 
     public void run(List<FileItem> selection) {
         if(!canAcitvate(selection)) return;
-        this.runnable.accept(selection);
+        if(supportsProgress()) {
+            this.progressRunnable.accept(selection, null);
+        } else {
+            this.runnable.accept(selection);
+        }
+    }
+
+    public void run(List<FileItem> selection, Progress progress) {
+        if(!canAcitvate(selection)) return;
+        if(supportsProgress()) {
+            this.progressRunnable.accept(selection, progress);
+        } else {
+            throw new IllegalArgumentException("This action does not support progress");
+        }
+    }
+
+    public boolean supportsProgress() {
+        return this.progressRunnable != null;
     }
 
     public Icon getIcon() {
@@ -77,6 +111,10 @@ public class FileAction {
         private final FileAction action;
 
         public Buider(Consumer<List<FileItem>> runnable) {
+            this.action = new FileAction(runnable);
+        }
+
+        public Buider(BiConsumer<List<FileItem>, Progress> runnable) {
             this.action = new FileAction(runnable);
         }
 
