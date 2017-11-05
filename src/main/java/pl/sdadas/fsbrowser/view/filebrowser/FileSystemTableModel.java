@@ -72,7 +72,7 @@ public class FileSystemTableModel extends AbstractTableModel {
 
     @Override
     public Class<?> getColumnClass(int columnIndex) {
-        return columnIndex != 0 ? String.class : Icon.class;
+        return this.columns[columnIndex].getColumnClass();
     }
 
     @Override
@@ -167,12 +167,13 @@ public class FileSystemTableModel extends AbstractTableModel {
     private FileBrowserColumn[] createColumns() {
         return new FileBrowserColumn[] {
             FileBrowserColumn.create("", Icon.class, FileItem::getIcon).minWidth(20).maxWidth(20),
-            FileBrowserColumn.create("Name", FileItem::getName),
-            FileBrowserColumn.create("Group", FileItem::getGroup),
-            FileBrowserColumn.create("Owner", FileItem::getOwner),
+            FileBrowserColumn.create("Name", FileItem::getName).sortable(true),
+            FileBrowserColumn.create("Group", FileItem::getGroup).sortable(true),
+            FileBrowserColumn.create("Owner", FileItem::getOwner).sortable(true),
             FileBrowserColumn.create("Permissions", FileItem::getPermissions).minWidth(90).maxWidth(90),
-            FileBrowserColumn.create("Modified", FileItem::getModificationTime).minWidth(130),
-            FileBrowserColumn.create("Size", FileItem::getSize),
+            FileBrowserColumn.create("Modified", FileItem.FileTimestamp.class, FileItem::getModificationTime)
+                    .minWidth(130).sortable(true),
+            FileBrowserColumn.create("Size", FileItem.FileSize.class, FileItem::getSize).sortable(true),
         };
     }
 

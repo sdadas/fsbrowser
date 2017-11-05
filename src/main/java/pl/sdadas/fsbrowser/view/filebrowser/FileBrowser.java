@@ -6,9 +6,9 @@ import com.google.common.collect.Lists;
 import javax.swing.*;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
-import javax.swing.table.TableRowSorter;
 import java.awt.*;
 import java.awt.event.KeyEvent;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -71,5 +71,13 @@ public class FileBrowser extends WebTable {
 
     public void filter(String text) {
         this.sorter.setRowFilter(new FileBrowserFilter(text));
+    }
+
+    public void clearSort() {
+        this.sorter.setSortKeys(new ArrayList<>());
+    }
+
+    public void setBeforeSort(Runnable run) {
+        this.sorter.setBeforeSort(run);
     }
 }

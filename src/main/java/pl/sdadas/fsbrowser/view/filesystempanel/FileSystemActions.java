@@ -275,7 +275,7 @@ public class FileSystemActions {
                     WebOptionPane.QUESTION_MESSAGE, null, null, path);
             if(result != null && result instanceof String) {
                 String value = StringUtils.strip((String) result);
-                parent.clearFilter();
+                parent.clearFilterAndSort();
                 parent.getModel().onFileClicked(new Path(value));
             }
         });
@@ -293,7 +293,7 @@ public class FileSystemActions {
         ViewUtils.handleErrors(parent, () -> {
             FileItem item = selection.get(0);
             if(item.isDirectory()) {
-                parent.clearFilter();
+                parent.clearFilterAndSort();
                 parent.getModel().onFileClicked(item.getPath());
             } else {
                 FSDataInputStream stream = parent.getConnection().read(item.getPath());

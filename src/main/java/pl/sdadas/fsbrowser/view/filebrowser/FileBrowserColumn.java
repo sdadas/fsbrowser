@@ -19,6 +19,8 @@ public class FileBrowserColumn {
 
     private Function<FileItem, ?> columnProvider;
 
+    private boolean sortable = false;
+
     public static <T> FileBrowserColumn create(String name, Class<T> clazz, Function<FileItem, T> columnProvider) {
         return new FileBrowserColumn(name, clazz, columnProvider);
     }
@@ -70,5 +72,14 @@ public class FileBrowserColumn {
 
     public Function<FileItem, ?> getColumnProvider() {
         return columnProvider;
+    }
+
+    public FileBrowserColumn sortable(boolean value) {
+        this.sortable = value;
+        return this;
+    }
+
+    public boolean isSortable() {
+        return sortable;
     }
 }

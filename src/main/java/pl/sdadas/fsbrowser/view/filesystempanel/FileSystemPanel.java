@@ -12,6 +12,7 @@ import com.alee.laf.scroll.WebScrollPane;
 import com.alee.laf.text.WebTextField;
 import com.alee.laf.toolbar.ToolbarStyle;
 import com.alee.laf.toolbar.WebToolBar;
+import com.alee.utils.SwingUtils;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
@@ -28,6 +29,7 @@ import pl.sdadas.fsbrowser.view.filebrowser.FileItem;
 import pl.sdadas.fsbrowser.view.filebrowser.FileSystemTableModel;
 
 import javax.swing.*;
+import javax.swing.event.RowSorterEvent;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.Closeable;
@@ -42,8 +44,6 @@ public class FileSystemPanel extends LoadingOverlay implements Closeable {
     private final FsConnection connection;
 
     private final FileSystemTableModel model;
-
-    private final ListeningExecutorService executor;
 
     private WebBreadcrumb breadcrumb;
 
@@ -67,7 +67,6 @@ public class FileSystemPanel extends LoadingOverlay implements Closeable {
         super(executor);
         this.connection = connection;
         this.model = BeanFactory.tableModel(connection);
-        this.executor = executor;
         this.actions = new FileSystemActions(this);
         this.clipboard = clipboard;
         this.filePopup = createFilePopup();
@@ -81,6 +80,7 @@ public class FileSystemPanel extends LoadingOverlay implements Closeable {
         this.model.addPathListener(this::onPathChanged);
         this.browser.addMouseListener(this.contextMenuListener());
         this.browser.setTransferHandler(new FileSystemTransferHandler(this));
+        this.browser.setBeforeSort(() -> asyncAction(model::loadAllRows));
     }
 
     private void initView() {
@@ -128,6 +128,10 @@ public class FileSystemPanel extends LoadingOverlay implements Closeable {
         };
     }
 
+    private void onSortChanged(RowSorterEvent event) {
+        SwingUtils.invokeLater(() -> asyncAction(model::loadAllRows));
+    }
+
     private void onPathChanged(Path value) {
         Path current = value;
         this.breadcrumb.removeAll();
@@ -169,7 +173,7 @@ public class FileSystemPanel extends LoadingOverlay implements Closeable {
         button.setIcon(IconFactory.getIcon("folder-small"));
         button.addActionListener(event -> {
             ViewUtils.handleErrors(this, () -> {
-                this.clearFilter();
+                this.clearFilterAndSort();
                 this.model.onFileClicked(path);
             });
         });
@@ -228,14 +232,15 @@ public class FileSystemPanel extends LoadingOverlay implements Closeable {
         if (idx < 0) return;
 
         ViewUtils.handleErrors(this, () -> {
-            FileItem item = model.getRow(idx);
+            int modelIdx = this.browser.convertRowIndexToModel(idx);
+            FileItem item = model.getRow(modelIdx);
             if(item == null) return;
 
             if(item.isFile()) {
                 asyncAction(() -> this.actions.doPreviewFile(Collections.singletonList(item)));
             } else {
-                this.clearFilter();
-                model.onFileClicked(idx);
+                this.clearFilterAndSort();
+                model.onFileClicked(modelIdx);
             }
         });
     }
@@ -355,8 +360,9 @@ public class FileSystemPanel extends LoadingOverlay implements Closeable {
         return actions;
     }
 
-    public void clearFilter() {
+    public void clearFilterAndSort() {
         this.filter.setText("");
         this.browser.filter("");
+        this.browser.clearSort();
     }
 }

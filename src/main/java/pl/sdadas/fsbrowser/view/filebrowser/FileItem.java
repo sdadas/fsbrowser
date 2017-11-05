@@ -1,5 +1,7 @@
 package pl.sdadas.fsbrowser.view.filebrowser;
 
+import com.google.common.primitives.Longs;
+import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.apache.commons.lang3.time.DateFormatUtils;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.Path;
@@ -39,8 +41,8 @@ public class FileItem {
         return status != null ? status.getPath().getName() : name;
     }
 
-    public String getSize() {
-        return status != null && status.isFile() ? FileSystemUtils.formatByteCount(status.getLen()) : null;
+    public FileSize getSize() {
+        return status != null && status.isFile() ? new FileSize(status.getLen()) : null;
     }
 
     public String getOwner() {
@@ -55,12 +57,12 @@ public class FileItem {
         return status != null ? status.getBlockSize() : null;
     }
 
-    public String getModificationTime() {
-        return status != null ? DateFormatUtils.format(status.getModificationTime(), "dd-MM-yyyy HH:mm:ss") : null;
+    public FileTimestamp getModificationTime() {
+        return status != null ? new FileTimestamp(status.getModificationTime()) : null;
     }
 
-    public String getAccessTime() {
-        return status != null ? DateFormatUtils.format(status.getAccessTime(), "dd-MM-yyyy HH:mm:ss") : null;
+    public FileTimestamp getAccessTime() {
+        return status != null ? new FileTimestamp(status.getAccessTime()) : null;
     }
 
     public String getPermissions() {
@@ -86,5 +88,51 @@ public class FileItem {
     private String getIconName() {
         if(status == null) return "folder-open";
         return status.isFile() ? "file" : "folder";
+    }
+
+    public static class FileTimestamp implements Comparable<FileTimestamp> {
+
+        private final long timestamp;
+
+        public FileTimestamp(long timestamp) {
+            this.timestamp = timestamp;
+        }
+
+        public long getTimestamp() {
+            return timestamp;
+        }
+
+        @Override
+        public String toString() {
+            return DateFormatUtils.format(timestamp, "dd-MM-yyyy HH:mm:ss");
+        }
+
+        @Override
+        public int compareTo(FileTimestamp other) {
+            return Longs.compare(this.timestamp, other.timestamp);
+        }
+    }
+
+    public static class FileSize implements Comparable<FileSize> {
+
+        private final long size;
+
+        public FileSize(long size) {
+            this.size = size;
+        }
+
+        public long getSize() {
+            return size;
+        }
+
+        @Override
+        public String toString() {
+            return FileSystemUtils.formatByteCount(size);
+        }
+
+        @Override
+        public int compareTo(FileSize other) {
+            return Longs.compare(this.size, other.size);
+        }
     }
 }
