@@ -9,6 +9,7 @@ import javax.swing.table.TableColumnModel;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -57,11 +58,11 @@ public class FileBrowser extends WebTable {
     public FileItem selectedItem() {
         int rowIdx = getSelectedRow();
         if(rowIdx < 0) return null;
-        return this.model.getRow(rowIdx);
+        return this.model.getRow(convertRowIndexToModel(rowIdx));
     }
 
     public List<FileItem> selectedItems() {
-        int rowIdx[] = getSelectedRows();
+        int rowIdx[] = Arrays.stream(getSelectedRows()).map(this::convertRowIndexToModel).toArray();
         List<FileItem> selection = Lists.newArrayList();
         for (int idx : rowIdx) {
             selection.add(this.model.getRow(idx));

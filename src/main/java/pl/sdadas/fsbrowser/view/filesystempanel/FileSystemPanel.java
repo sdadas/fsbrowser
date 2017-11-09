@@ -110,7 +110,7 @@ public class FileSystemPanel extends LoadingOverlay implements Closeable {
                 if(!event.isPopupTrigger()) return;
 
                 Point point = event.getPoint();
-                int rowIdx = browser.rowAtPoint(point);
+                int rowIdx = browser.convertRowIndexToModel(browser.rowAtPoint(point));
                 int colIdx = browser.columnAtPoint(point);
                 if(!browser.isRowSelected(rowIdx)) {
                     browser.changeSelection(rowIdx, colIdx, false, false);
