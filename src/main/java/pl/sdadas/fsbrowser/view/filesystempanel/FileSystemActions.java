@@ -240,7 +240,6 @@ public class FileSystemActions {
             parent.getModel().reloadView();
         } else {
             if(!ViewUtils.requireNativeLibraries(parent)) return;
-                /* TODO: Ara you sure? */
             doDistCp(paths.getConnection(), parent.getConnection(), src, dest);
             if(!paths.getSource().isClosed()) {
                 paths.getSource().getModel().reloadView();
@@ -425,6 +424,39 @@ public class FileSystemActions {
             String chmod = dialog.showDialog();
             if(StringUtils.isNotBlank(chmod)) {
                 parent.getConnection().chmod(path, chmod, dialog.isRecursive());
+                parent.getModel().reloadView();
+            }
+        });
+    }
+
+    public FileAction archiveAction() {
+        return FileAction.builder(this::doArchive)
+                .name("Archive")
+                .icon("har")
+                .predicates(this::notEmptyPredicate)
+                .get();
+    }
+
+    private void doArchive(List<FileItem> selection) {
+        ViewUtils.handleErrors(parent, () -> {
+            String defaultName = selection.size() > 1 ? "archive.har" : selection.get(0).getName() + ".har";
+            String defaultPath = parent.getModel().getCurrentPath().toUri().getPath() + "/" + defaultName;
+            Object result = WebOptionPane.showInputDialog(parent, "Save archive to", "Archive path",
+                    WebOptionPane.QUESTION_MESSAGE, null, null, defaultPath);
+            if(result != null && result instanceof String) {
+                String output = StringUtils.strip((String) result);
+                if(!ViewUtils.requireNativeLibraries(parent)) return;
+                if(!StringUtils.endsWithIgnoreCase(output, ".har")) {
+                    ViewUtils.error(parent, "Hadoop archive should have a .har extension.");
+                    return;
+                }
+                Path workingDir = parent.getModel().getCurrentPath();
+                Path[] sources = getItemPaths(selection);
+                String archiveName = StringUtils.substringAfterLast(output, "/");
+                String dest = StringUtils.removeEnd(output, archiveName);
+                Path destPath = dest.startsWith("/") ? new Path(dest) : new Path(workingDir, dest);
+
+                parent.getConnection().archive(archiveName, workingDir, sources, destPath);
                 parent.getModel().reloadView();
             }
         });

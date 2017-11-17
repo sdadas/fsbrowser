@@ -21,6 +21,8 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.util.Shell;
 import pl.sdadas.fsbrowser.fs.connection.FsConnection;
 
+import java.util.Arrays;
+
 /**
  * @author Sławomir Dadas
  */
@@ -60,6 +62,10 @@ public class FileSystemUtils {
         String parentPath = parent.toUri().getPath();
         String childPath = child.toUri().getPath();
         return childPath.startsWith(parentPath);
+    }
+
+    public static String[] pathsToStrings(Path... paths) {
+        return Arrays.stream(paths).map(path -> path.toUri().getPath()).toArray(String[]::new);
     }
 
     private static int getMetricUnit(boolean si) {

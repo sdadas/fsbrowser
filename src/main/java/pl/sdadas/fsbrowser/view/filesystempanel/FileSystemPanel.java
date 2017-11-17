@@ -110,7 +110,8 @@ public class FileSystemPanel extends LoadingOverlay implements Closeable {
                 if(!event.isPopupTrigger()) return;
 
                 Point point = event.getPoint();
-                int rowIdx = browser.convertRowIndexToModel(browser.rowAtPoint(point));
+                int viewRowIdx = browser.rowAtPoint(point);
+                int rowIdx = viewRowIdx >= 0 ? browser.convertRowIndexToModel(viewRowIdx) : -1;
                 int colIdx = browser.columnAtPoint(point);
                 if(!browser.isRowSelected(rowIdx)) {
                     browser.changeSelection(rowIdx, colIdx, false, false);
@@ -254,6 +255,7 @@ public class FileSystemPanel extends LoadingOverlay implements Closeable {
         result.add(createToolButton(this.actions.cutAction()));
         result.add(createToolButton(this.actions.copyAction()));
         result.add(createToolButton(this.actions.pasteAction()));
+        result.add(createToolButton(this.actions.archiveAction()));
         result.add(createToolButton(this.actions.mkdirAction()));
         result.add(createToolButton(this.actions.touchAction()));
         result.add(createToolButton(this.actions.moveToTrashAction()));
@@ -287,6 +289,7 @@ public class FileSystemPanel extends LoadingOverlay implements Closeable {
         result.add(createMenuItem(this.actions.cutAction()));
         result.add(createMenuItem(this.actions.copyAction()));
         result.add(createMenuItem(this.actions.pasteAction()));
+        result.add(createMenuItem(this.actions.archiveAction()));
         result.add(createMenuItem(this.actions.renameAction()));
         result.add(createMenuItem(this.actions.moveToTrashAction()));
         result.add(createMenuItem(this.actions.removeAction()));

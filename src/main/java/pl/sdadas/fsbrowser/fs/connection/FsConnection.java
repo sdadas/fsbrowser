@@ -3,6 +3,8 @@ package pl.sdadas.fsbrowser.fs.connection;
 import com.google.common.collect.Lists;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Validate;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FileStatus;
@@ -10,15 +12,14 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.security.AccessControlException;
 import org.apache.hadoop.security.UserGroupInformation;
+import org.apache.hadoop.tools.HadoopArchives;
 import org.springframework.data.hadoop.fs.DistCp;
 import org.springframework.data.hadoop.fs.FsShell;
 import pl.sdadas.fsbrowser.exception.FsAccessException;
 import pl.sdadas.fsbrowser.exception.FsException;
-import pl.sdadas.fsbrowser.fs.action.CleanupAction;
-import pl.sdadas.fsbrowser.fs.action.CopyFromLocalAction;
-import pl.sdadas.fsbrowser.fs.action.FsAction;
-import pl.sdadas.fsbrowser.fs.action.FsckAction;
+import pl.sdadas.fsbrowser.fs.action.*;
 import pl.sdadas.fsbrowser.fs.common.ProgressFileSystemListener;
+import pl.sdadas.fsbrowser.utils.FileSystemUtils;
 import pl.sdadas.fsbrowser.view.common.loading.Progress;
 
 import java.io.*;
@@ -64,7 +65,7 @@ public class FsConnection implements Closeable {
             UserGroupInformation ugi = UserGroupInformation.createRemoteUser(config.getUser());
             return ugi.doAs((PrivilegedExceptionAction<T>) () -> {
                 Configuration conf = config.getConfiguration();
-                FileSystem actionFs = separateConnection ? FileSystem.get(conf) : this.fs;
+                FileSystem actionFs = separateConnection ? FileSystem.newInstance(conf) : this.fs;
                 FsShell actionShell = separateConnection ? new FsShell(conf, actionFs) : this.shell;
                 T ret = action.execute(actionShell, actionFs);
                 if(separateConnection) {
@@ -117,7 +118,7 @@ public class FsConnection implements Closeable {
     }
 
     public void remove(Path[] paths, boolean skipTrash) throws FsException {
-        String[] items = pathsToStrings(paths);
+        String[] items = FileSystemUtils.pathsToStrings(paths);
         execute((shell, fs) -> {
             shell.rmr(skipTrash, items);
             return null;
@@ -132,7 +133,7 @@ public class FsConnection implements Closeable {
     }
 
     public void touch(Path... paths) throws FsException {
-        String[] items = pathsToStrings(paths);
+        String[] items = FileSystemUtils.pathsToStrings(paths);
         execute((shell, fs) -> {
             shell.touchz(items);
             return null;
@@ -165,8 +166,13 @@ public class FsConnection implements Closeable {
         });
     }
 
+    public void archive(String archiveName, Path workingDir, Path[] src, Path dest) throws FsException {
+        Validate.isTrue(StringUtils.endsWithIgnoreCase(archiveName, ".har"), "archiveName should end with .har");
+        execute(new HadoopArchivesAction(archiveName, workingDir, src, dest));
+    }
+
     private void doCopy(Path[] src, Path dest, boolean deleteSrc) throws FsException {
-        List<String> paths = Lists.newArrayList(pathsToStrings(src));
+        List<String> paths = Lists.newArrayList(FileSystemUtils.pathsToStrings(src));
         execute((shell, fs) -> {
             String target = dest.toUri().getPath();
             String first = paths.get(0);
@@ -238,10 +244,6 @@ public class FsConnection implements Closeable {
 
     public Configuration getConfig() {
         return this.config.getConfiguration();
-    }
-
-    private String[] pathsToStrings(Path... paths) {
-        return Arrays.stream(paths).map(path -> path.toUri().getPath()).toArray(String[]::new);
     }
 
     public String getUser() {
