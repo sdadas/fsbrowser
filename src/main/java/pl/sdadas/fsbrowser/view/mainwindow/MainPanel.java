@@ -165,13 +165,17 @@ public class MainPanel extends WebPanel {
     }
 
     public void openFileSystemTab(FsConnection connection, String name, String workingDirectory) {
-        FileSystemPanel fspanel = new FileSystemPanel(connection, this.clipboard, this.executor);
-        if(StringUtils.isNotBlank(workingDirectory)) {
-            fspanel.setCurrentPath(workingDirectory);
+        try {
+            FileSystemPanel fspanel = new FileSystemPanel(connection, this.clipboard, this.executor);
+            if(StringUtils.isNotBlank(workingDirectory)) {
+                fspanel.setCurrentPath(workingDirectory);
+            }
+            String id = RandomStringUtils.randomAlphabetic(32);
+            DocumentData document = new DocumentData(id, IconFactory.getIcon("disk"), name, fspanel);
+            this.pane.openDocument(document);
+        } catch (RuntimeException ex) {
+            ViewUtils.error(this, "Error opening HDFS connection:\n" + ex.getMessage());
         }
-        String id = RandomStringUtils.randomAlphabetic(32);
-        DocumentData document = new DocumentData(id, IconFactory.getIcon("disk"), name, fspanel);
-        this.pane.openDocument(document);
     }
 
     public DocumentData getActiveDocument() {
