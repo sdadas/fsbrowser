@@ -1,5 +1,6 @@
 package pl.sdadas.fsbrowser.view.mainwindow;
 
+import com.alee.laf.button.WebButton;
 import com.alee.laf.rootpane.WebFrame;
 import pl.sdadas.fsbrowser.app.clipboard.ClipboardHelper;
 import pl.sdadas.fsbrowser.app.config.AppConfigProvider;
@@ -30,6 +31,11 @@ public class MainWindow extends WebFrame {
 
     public void run() {
         setVisible(true);
-        this.panel.showConnectionsDialog();
+        if(panel.hasConnections()) {
+            WebButton connect = panel.getStatusBarButton("Connect");
+            if(connect != null) connect.doClick();
+        } else {
+            panel.showConnectionsDialog();
+        }
     }
 }

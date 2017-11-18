@@ -2,8 +2,6 @@ package pl.sdadas.fsbrowser.app;
 
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
-import org.springframework.core.io.ClassPathResource;
-import org.springframework.core.io.Resource;
 import pl.sdadas.fsbrowser.app.clipboard.ClipboardHelper;
 import pl.sdadas.fsbrowser.app.config.AppConfigProvider;
 import pl.sdadas.fsbrowser.app.config.AppConnection;
@@ -11,13 +9,12 @@ import pl.sdadas.fsbrowser.exception.FsException;
 import pl.sdadas.fsbrowser.fs.connection.ConnectionConfig;
 import pl.sdadas.fsbrowser.fs.connection.FsConnection;
 import pl.sdadas.fsbrowser.view.filebrowser.FileSystemTableModel;
+import pl.sdadas.fsbrowser.view.locations.StatusBarHelper;
 import pl.sdadas.fsbrowser.view.mainwindow.MainPanel;
 import pl.sdadas.fsbrowser.view.mainwindow.MainWindow;
 
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.Supplier;
@@ -50,7 +47,9 @@ public final class BeanFactory {
     }
 
     public static MainPanel mainPanel() {
-        return singleton(MainPanel.class, () -> new MainPanel(configProvider(), clipboardHelper(), executorService()));
+        return singleton(MainPanel.class, () -> {
+            return new MainPanel(configProvider(), clipboardHelper(), executorService(), statusBarHelper());
+        });
     }
 
     public static MainWindow mainWindow() {
@@ -68,18 +67,9 @@ public final class BeanFactory {
         });
     }
 
-    public static Properties getApplicationProperties() {
-        return singleton(Properties.class, () -> {
-            try {
-                Properties result = new Properties();
-                Resource maven = new ClassPathResource("/META-INF/maven/pl.sdadas.fsbrowser/fsbrowser/pom.properties");
-                if(maven.exists()) {
-                    result.load(maven.getInputStream());
-                }
-                return result;
-            } catch (IOException e) {
-                throw new IllegalStateException(e);
-            }
+    public static StatusBarHelper statusBarHelper() {
+        return singleton(StatusBarHelper.class, () -> {
+            return new StatusBarHelper(configProvider());
         });
     }
 

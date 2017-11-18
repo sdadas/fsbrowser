@@ -377,4 +377,11 @@ public class FileSystemPanel extends LoadingOverlay implements Closeable {
         this.browser.filter("");
         this.browser.clearSort();
     }
+
+    public void setCurrentPath(String path) {
+        ViewUtils.handleErrors(this, () -> {
+            this.clearFilterAndSort();
+            this.getModel().onFileClicked(new Path(path));
+        });
+    }
 }

@@ -16,6 +16,8 @@ public class AppConfig implements Serializable {
 
     private List<AppConnection> connections = Lists.newArrayList();
 
+    private List<AppLocation> locations = Lists.newArrayList();
+
     public List<AppConnection> getConnections() {
         return connections;
     }
@@ -24,5 +26,15 @@ public class AppConfig implements Serializable {
     @XmlElement(name = "connection")
     public void setConnections(List<AppConnection> connections) {
         this.connections = connections;
+    }
+
+    public List<AppLocation> getLocations() {
+        return locations;
+    }
+
+    @XmlElementWrapper(name = "locations")
+    @XmlElement(name = "location")
+    public void setLocations(List<AppLocation> locations) {
+        this.locations = locations;
     }
 }

@@ -17,6 +17,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
+import pl.sdadas.fsbrowser.app.config.AppConfigProvider;
 import pl.sdadas.fsbrowser.app.config.AppConnection;
 import pl.sdadas.fsbrowser.app.config.ConfigProperty;
 import pl.sdadas.fsbrowser.app.config.SourceConfig;
@@ -30,9 +31,7 @@ import java.awt.event.ActionEvent;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Enumeration;
+import java.util.*;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
@@ -44,6 +43,8 @@ import java.util.zip.ZipFile;
 public class EditConnectionDialog extends WebDialog {
 
     private final PropertyTableModel propertiesModel;
+
+    private final AppConfigProvider configProvider;
 
     private WebTable propertiesTable;
 
@@ -59,10 +60,11 @@ public class EditConnectionDialog extends WebDialog {
 
     private boolean success;
 
-    public EditConnectionDialog(AppConnection value, Dialog owner) {
+    public EditConnectionDialog(AppConnection value, ConnectionsDialog owner) {
         super(owner);
         this.value = value;
         this.propertiesModel = new PropertyTableModel(value.getPropertiesMap());
+        this.configProvider = owner.getConfigProvider();
         initView();
         initListeners();
         initValues();
@@ -145,6 +147,12 @@ public class EditConnectionDialog extends WebDialog {
         if(StringUtils.isBlank(userValue)) errors.add("User name cannot be empty.");
         if(this.value.getProperties() == null || this.value.getProperties().isEmpty()) {
             errors.add("No hadoop configuration files provided.");
+        }
+
+        Optional<AppConnection> matchesName = configProvider.getConfig().getConnections().stream()
+                .filter(conn -> StringUtils.equalsIgnoreCase(conn.getName(), nameValue)).findAny();
+        if(matchesName.isPresent()) {
+            errors.add(String.format("Connection %s already exists.", nameValue));
         }
 
         if(!errors.isEmpty()) {

@@ -46,7 +46,7 @@ public class ConnectionsDialog extends WebDialog {
         this.model = createListModel();
         this.list = createList();
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
-        setMinimumSize(new Dimension(400, 200));
+        setMinimumSize(new Dimension(350, 200));
         setTitle("Connections");
         setResizable(false);
         setModal(false);
@@ -111,7 +111,8 @@ public class ConnectionsDialog extends WebDialog {
     private WebButton createButton(String text, String icon, Runnable actionListener) {
         WebButton result = new WebButton(text, IconFactory.getIcon(icon));
         result.addActionListener((event) -> actionListener.run());
-        result.setPreferredWidth(85);
+        result.setPreferredWidth(80);
+        result.setFontSize(11);
         return result;
     }
 
@@ -166,5 +167,9 @@ public class ConnectionsDialog extends WebDialog {
         for (ConnectListener listener : connectListeners) {
             listener.onConnect(connection);
         }
+    }
+
+    public AppConfigProvider getConfigProvider() {
+        return configProvider;
     }
 }
