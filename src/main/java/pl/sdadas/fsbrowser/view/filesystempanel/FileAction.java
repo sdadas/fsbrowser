@@ -29,14 +29,16 @@ public class FileAction {
 
     private String tooltip;
 
-    public static FileAction.Buider builder(Consumer<List<FileItem>> runnable) {
+    private boolean isReadOnly;
+
+    public static Builder builder(Consumer<List<FileItem>> runnable) {
         Validate.notNull(runnable);
-        return new Buider(runnable);
+        return new Builder(runnable);
     }
 
-    public static FileAction.Buider builder(BiConsumer<List<FileItem>, Progress> runnable) {
+    public static Builder builder(BiConsumer<List<FileItem>, Progress> runnable) {
         Validate.notNull(runnable);
-        return new Buider(runnable);
+        return new Builder(runnable);
     }
 
     private FileAction(Consumer<List<FileItem>> action) {
@@ -106,35 +108,48 @@ public class FileAction {
         this.tooltip = tooltip;
     }
 
-    public static class Buider {
+    public boolean isReadOnly() {
+        return isReadOnly;
+    }
+
+    public void setReadOnly(boolean readOnly) {
+        isReadOnly = readOnly;
+    }
+
+    public static class Builder {
 
         private final FileAction action;
 
-        public Buider(Consumer<List<FileItem>> runnable) {
+        public Builder(Consumer<List<FileItem>> runnable) {
             this.action = new FileAction(runnable);
         }
 
-        public Buider(BiConsumer<List<FileItem>, Progress> runnable) {
+        public Builder(BiConsumer<List<FileItem>, Progress> runnable) {
             this.action = new FileAction(runnable);
         }
 
-        public Buider icon(String value) {
+        public Builder icon(String value) {
             this.action.setIcon(IconFactory.getIcon(value));
             return this;
         }
 
-        public Buider predicates(ActionPredicate... values) {
+        public Builder predicates(ActionPredicate... values) {
             this.action.predicates.addAll(Arrays.asList(values));
             return this;
         }
 
-        public Buider name(String value) {
+        public Builder name(String value) {
             this.action.name = value;
             return this;
         }
 
-        public Buider tooltip(String value) {
+        public Builder tooltip(String value) {
             this.action.tooltip = value;
+            return this;
+        }
+
+        public Builder readOnly(boolean value) {
+            this.action.isReadOnly = value;
             return this;
         }
 

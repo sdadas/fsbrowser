@@ -279,7 +279,7 @@ public class FileSystemPanel extends LoadingOverlay implements Closeable {
         result.setRolloverDecoratedOnly(true);
         result.setDrawFocus(false);
         if(StringUtils.isNotBlank(action.getName())) result.setToolTipText(action.getName());
-        result.addActionListener((event) -> invokeAsync(action));
+        createActionInvoker(result, action);
         return result;
     }
 
@@ -297,6 +297,7 @@ public class FileSystemPanel extends LoadingOverlay implements Closeable {
         result.add(createMenuItem(this.actions.chownAction()));
         result.add(createMenuItem(this.actions.previewFileAction()));
         result.add(createMenuItem(this.actions.fsckAction()));
+        result.add(createMenuItem(this.actions.openArchiveAction()));
         return result;
     }
 
@@ -312,8 +313,16 @@ public class FileSystemPanel extends LoadingOverlay implements Closeable {
 
     private WebMenuItem createMenuItem(FileAction action) {
         WebMenuItem result = new WebMenuItem(action.getName(), action.getIcon());
-        result.addActionListener((event) -> invokeAsync(action));
+        createActionInvoker(result, action);
         return result;
+    }
+
+    private void createActionInvoker(AbstractButton button, FileAction action) {
+        if(this.connection.isReadOnly() && !action.isReadOnly()) {
+            button.setEnabled(false);
+        } else {
+            button.addActionListener((event) -> invokeAsync(action));
+        }
     }
 
     private void invokeAsync(FileAction action) {

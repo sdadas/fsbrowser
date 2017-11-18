@@ -10,11 +10,13 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.Path;
+import pl.sdadas.fsbrowser.app.BeanFactory;
 import pl.sdadas.fsbrowser.app.clipboard.ClipboardAction;
 import pl.sdadas.fsbrowser.app.clipboard.ClipboardHelper;
 import pl.sdadas.fsbrowser.exception.FsException;
 import pl.sdadas.fsbrowser.fs.connection.ConnectionConfig;
 import pl.sdadas.fsbrowser.fs.connection.FsConnection;
+import pl.sdadas.fsbrowser.fs.connection.HarFsConnection;
 import pl.sdadas.fsbrowser.utils.FileSystemUtils;
 import pl.sdadas.fsbrowser.utils.ViewUtils;
 import pl.sdadas.fsbrowser.view.chmod.ChmodDialog;
@@ -24,6 +26,7 @@ import pl.sdadas.fsbrowser.view.common.loading.Progress;
 import pl.sdadas.fsbrowser.view.filebrowser.FileItem;
 import pl.sdadas.fsbrowser.view.filebrowser.FileSystemTableModel;
 import pl.sdadas.fsbrowser.view.filecontent.FileContentDialog;
+import pl.sdadas.fsbrowser.view.mainwindow.MainPanel;
 import pl.sdadas.fsbrowser.view.props.PropertiesDialog;
 
 import java.awt.*;
@@ -86,6 +89,7 @@ public class FileSystemActions {
         return FileAction.builder(this::doCopyToLocal)
                 .name("Copy to local")
                 .icon("copy-to-local")
+                .readOnly(true)
                 .predicates(this::notEmptyPredicate)
                 .get();
     }
@@ -264,6 +268,7 @@ public class FileSystemActions {
         return FileAction.builder(this::doGoto)
                 .name("Go to directory")
                 .icon("goto")
+                .readOnly(true)
                 .get();
     }
 
@@ -284,6 +289,7 @@ public class FileSystemActions {
         return FileAction.builder(this::doPreviewFile)
                 .name("Preview")
                 .icon("preview")
+                .readOnly(true)
                 .predicates(this::singlePredicate)
                 .get();
     }
@@ -349,6 +355,7 @@ public class FileSystemActions {
         return FileAction.builder(this::doRefresh)
                 .name("Refresh current view")
                 .icon("refresh")
+                .readOnly(true)
                 .get();
     }
 
@@ -432,7 +439,7 @@ public class FileSystemActions {
     public FileAction archiveAction() {
         return FileAction.builder(this::doArchive)
                 .name("Archive")
-                .icon("har")
+                .icon("har-create")
                 .predicates(this::notEmptyPredicate)
                 .get();
     }
@@ -446,7 +453,7 @@ public class FileSystemActions {
             if(result != null && result instanceof String) {
                 String output = StringUtils.strip((String) result);
                 if(!ViewUtils.requireNativeLibraries(parent)) return;
-                if(!StringUtils.endsWithIgnoreCase(output, ".har")) {
+                if(!StringUtils.endsWith(output, ".har")) {
                     ViewUtils.error(parent, "Hadoop archive should have a .har extension.");
                     return;
                 }
@@ -459,6 +466,29 @@ public class FileSystemActions {
                 parent.getConnection().archive(archiveName, workingDir, sources, destPath);
                 parent.getModel().reloadView();
             }
+        });
+    }
+
+    public FileAction openArchiveAction() {
+        return FileAction.builder(this::doOpenArchive)
+                .name("Open as Hadoop Archive")
+                .icon("har-open")
+                .predicates(this::singlePredicate, this::dirsOnlyPredicate)
+                .get();
+    }
+
+    private void doOpenArchive(List<FileItem> selection) {
+        ViewUtils.handleErrors(parent, () -> {
+            Path archivePath = selection.get(0).getPath();
+            String archiveName = archivePath.getName();
+            if(!StringUtils.endsWith(archiveName, ".har")) {
+                ViewUtils.error(parent, "Hadoop archive should have a .har extension.");
+                return;
+            }
+
+            HarFsConnection connection = new HarFsConnection(parent.getConnection(), archivePath);
+            MainPanel mainPanel = BeanFactory.mainPanel();
+            mainPanel.openFileSystemTab(connection, StringUtils.abbreviate(archiveName, 50));
         });
     }
 

@@ -1,6 +1,7 @@
 package pl.sdadas.fsbrowser.view.filebrowser;
 
 import com.google.common.primitives.Longs;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.apache.commons.lang3.time.DateFormatUtils;
 import org.apache.hadoop.fs.FileStatus;
@@ -87,7 +88,15 @@ public class FileItem {
 
     private String getIconName() {
         if(status == null) return "folder-open";
-        return status.isFile() ? "file" : "folder";
+        if(status.isDirectory()) {
+            if(StringUtils.endsWith(getName(), ".har")) {
+                return "har";
+            } else {
+                return "folder";
+            }
+        } else {
+            return "file";
+        }
     }
 
     public static class FileTimestamp implements Comparable<FileTimestamp> {

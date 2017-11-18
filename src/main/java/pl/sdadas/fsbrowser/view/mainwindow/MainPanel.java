@@ -17,6 +17,7 @@ import pl.sdadas.fsbrowser.app.clipboard.ClipboardHelper;
 import pl.sdadas.fsbrowser.app.config.AppConfigProvider;
 import pl.sdadas.fsbrowser.app.config.AppConnection;
 import pl.sdadas.fsbrowser.fs.connection.ConnectionConfig;
+import pl.sdadas.fsbrowser.fs.connection.FsConnection;
 import pl.sdadas.fsbrowser.utils.IconFactory;
 import pl.sdadas.fsbrowser.view.connections.ConnectionsDialog;
 import pl.sdadas.fsbrowser.view.filesystempanel.FileSystemPanel;
@@ -82,9 +83,13 @@ public class MainPanel extends WebPanel {
     }
 
     private void onConnect(AppConnection connection) {
-        FileSystemPanel fspanel = new FileSystemPanel(BeanFactory.connection(connection), this.clipboard, this.executor);
+        openFileSystemTab(BeanFactory.connection(connection), connection.getName());
+    }
+
+    public void openFileSystemTab(FsConnection connection, String name) {
+        FileSystemPanel fspanel = new FileSystemPanel(connection, this.clipboard, this.executor);
         String id = RandomStringUtils.randomAlphabetic(32);
-        DocumentData document = new DocumentData(id, IconFactory.getIcon("disk"), connection.getName(), fspanel);
+        DocumentData document = new DocumentData(id, IconFactory.getIcon("disk"), name, fspanel);
         this.pane.openDocument(document);
     }
 
