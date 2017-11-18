@@ -462,6 +462,10 @@ public class FileSystemActions {
                 String archiveName = StringUtils.substringAfterLast(output, "/");
                 String dest = StringUtils.removeEnd(output, archiveName);
                 Path destPath = dest.startsWith("/") ? new Path(dest) : new Path(workingDir, dest);
+                if(parent.getConnection().exists(new Path(output))) {
+                    ViewUtils.error(parent, String.format("File %s already exists.", output));
+                    return;
+                }
 
                 parent.getConnection().archive(archiveName, workingDir, sources, destPath);
                 parent.getModel().reloadView();
