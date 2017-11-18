@@ -49,7 +49,7 @@ public class ConnectionsDialog extends WebDialog {
         setMinimumSize(new Dimension(400, 200));
         setTitle("Connections");
         setResizable(false);
-        setModal(true);
+        setModal(false);
 
         WebPanel buttonsPanel = createButtonsPanel();
         buttonsPanel.setMargin(10, 0, 0, 0);

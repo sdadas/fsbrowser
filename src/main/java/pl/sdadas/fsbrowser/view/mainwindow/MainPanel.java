@@ -12,6 +12,10 @@ import com.alee.utils.SwingUtils;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang3.text.StrSubstitutor;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.Resource;
+import pl.sdadas.fsbrowser.Version;
 import pl.sdadas.fsbrowser.app.BeanFactory;
 import pl.sdadas.fsbrowser.app.clipboard.ClipboardHelper;
 import pl.sdadas.fsbrowser.app.config.AppConfigProvider;
@@ -19,10 +23,17 @@ import pl.sdadas.fsbrowser.app.config.AppConnection;
 import pl.sdadas.fsbrowser.fs.connection.ConnectionConfig;
 import pl.sdadas.fsbrowser.fs.connection.FsConnection;
 import pl.sdadas.fsbrowser.utils.IconFactory;
+import pl.sdadas.fsbrowser.utils.ViewUtils;
+import pl.sdadas.fsbrowser.view.common.messages.MessageLevel;
 import pl.sdadas.fsbrowser.view.connections.ConnectionsDialog;
 import pl.sdadas.fsbrowser.view.filesystempanel.FileSystemPanel;
 
 import java.awt.*;
+import java.awt.event.ActionListener;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author Sławomir Dadas
@@ -38,6 +49,8 @@ public class MainPanel extends WebPanel {
     private final ClipboardHelper clipboard;
 
     private final ListeningExecutorService executor;
+
+    private ConnectionsDialog connectionsDialog;
 
     public MainPanel(AppConfigProvider configProvider, ClipboardHelper clipboard, ListeningExecutorService executor) {
         super(new BorderLayout());
@@ -69,17 +82,43 @@ public class MainPanel extends WebPanel {
 
     private WebStatusBar createStatusBar() {
         WebStatusBar result = new WebStatusBar();
-        WebButton connectionsButton = new WebButton(IconFactory.getIcon("connection"));
-        connectionsButton.addActionListener((event) -> showConnectionsDialog());
-        result.add(connectionsButton);
+        result.add(this.createButton("Connect", "connection", (event) -> showConnectionsDialog()));
+        result.add(this.createButton("About", "about", (event) -> showAboutDialog()));
         return result;
     }
 
-    public void showConnectionsDialog() {
+    private WebButton createButton(String text, String icon, ActionListener listener) {
+        WebButton button = new WebButton(text, IconFactory.getIcon(icon));
+        button.setFontSize(11);
+        button.addActionListener(listener);
+        button.setMinimumWidth(80);
+        return button;
+    }
+
+    void showConnectionsDialog() {
+        if(this.connectionsDialog == null) {
+            Window window = SwingUtils.getWindowAncestor(this);
+            this.connectionsDialog = new ConnectionsDialog(this.configProvider, window);
+            this.connectionsDialog.addConnectListener(this::onConnect);
+        }
+        this.connectionsDialog.setVisible(true);
+    }
+
+    private void showAboutDialog() {
+        try {
+            doShowAboutDialog();
+        } catch (IOException e) {
+            ViewUtils.error(this, e.getMessage());
+        }
+    }
+
+    private void doShowAboutDialog() throws IOException {
         Window window = SwingUtils.getWindowAncestor(this);
-        ConnectionsDialog dialog = new ConnectionsDialog(this.configProvider, window);
-        dialog.addConnectListener(this::onConnect);
-        dialog.setVisible(true);
+        Resource resource = new ClassPathResource("about.html");
+        String text = IOUtils.toString(resource.getInputStream(), StandardCharsets.UTF_8);
+        Map<String, String> params = new HashMap<>();
+        params.put("fullVersionString", Version.getFullVersionString());
+        ViewUtils.message(window, MessageLevel.Info, "", StrSubstitutor.replace(text, params));
     }
 
     private void onConnect(AppConnection connection) {

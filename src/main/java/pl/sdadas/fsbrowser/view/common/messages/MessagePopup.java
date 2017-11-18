@@ -71,7 +71,7 @@ public class MessagePopup extends WebPopOver {
     private String wrapText(String value) {
         String[] split = value.split("\n");
         int maxLineLength = Arrays.stream(split).map(String::length).max(Integer::compare).orElse(10);
-        int width = Math.min(maxLineLength * 5, 400);
+        int width = Math.min(maxLineLength * 5, 300);
         String text = StringUtils.replace(value, "\n", "<br/>");
         return "<html><div style=\"width:" + width + "px;text-align:center\">" + text + "</div></html>";
     }
