@@ -144,12 +144,11 @@ public class MainPanel extends WebPanel {
     }
 
     private void doShowAboutDialog() throws IOException {
-        Window window = SwingUtils.getWindowAncestor(this);
         Resource resource = new ClassPathResource("about.html");
         String text = IOUtils.toString(resource.getInputStream(), StandardCharsets.UTF_8);
         Map<String, String> params = new HashMap<>();
         params.put("fullVersionString", Version.getFullVersionString());
-        ViewUtils.message(window, MessageLevel.Info, "", StrSubstitutor.replace(text, params));
+        ViewUtils.message(this, MessageLevel.Info, "", StrSubstitutor.replace(text, params));
     }
 
     private void onConnect(AppConnection connection) {

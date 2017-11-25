@@ -1,9 +1,6 @@
 package pl.sdadas.fsbrowser.utils;
 
 import com.alee.extended.layout.HorizontalFlowLayout;
-import com.alee.extended.window.PopOverDirection;
-import com.alee.extended.window.PopOverLocation;
-import com.alee.laf.button.WebButton;
 import com.alee.laf.panel.WebPanel;
 import com.alee.utils.SizeUtils;
 import com.alee.utils.SwingUtils;
@@ -67,11 +64,15 @@ public final class ViewUtils {
     }
 
     public static MessagePopup message(Component comp, MessageLevel level, String title, String message) {
-        MessagePopup result = new MessagePopup(SwingUtils.getWindowAncestor(comp));
+        Window window = SwingUtils.getWindowAncestor(comp);
+        MessagePopup result = new MessagePopup(window);
         result.setLevel(level);
         result.setTitle(title);
         result.setText(message);
-        result.show(PopOverLocation.center);
+        result.pack();
+        int x = window.getX() + (window.getWidth() / 2) - (result.getWidth() / 2);
+        int y = window.getY() + (window.getHeight() / 2) - (result.getHeight() / 2);
+        result.show(x, y);
         return result;
     }
 

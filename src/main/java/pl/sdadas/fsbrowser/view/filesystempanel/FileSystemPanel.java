@@ -13,6 +13,7 @@ import com.alee.laf.text.WebTextField;
 import com.alee.laf.toolbar.ToolbarStyle;
 import com.alee.laf.toolbar.WebToolBar;
 import com.alee.utils.SwingUtils;
+import com.alee.utils.SystemUtils;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
@@ -107,8 +108,7 @@ public class FileSystemPanel extends LoadingOverlay implements Closeable {
         return new MouseAdapter() {
             @Override
             public void mouseReleased(MouseEvent event) {
-                if(!event.isPopupTrigger()) return;
-
+                if(!SwingUtils.isPopupTrigger(event)) return;
                 Point point = event.getPoint();
                 int viewRowIdx = browser.rowAtPoint(point);
                 int rowIdx = viewRowIdx >= 0 ? browser.convertRowIndexToModel(viewRowIdx) : -1;
