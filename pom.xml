@@ -20,7 +20,7 @@
     <properties>
         <maven.build.timestamp.format>yyyyMMdd-HHmm</maven.build.timestamp.format>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <hadoop.version>2.7.1</hadoop.version>
+        <hadoop.version>3.2.3</hadoop.version>
         <hadoop.mr1.version>2.7.1</hadoop.mr1.version>
     </properties>
 
